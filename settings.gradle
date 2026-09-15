@@ -5,6 +5,7 @@ include 'common'
 
 include 'common:core'
 include 'common:core:kafka-event-core'
+include 'common:core:admin-core'
 
 // --- character service ---
 include 'character-service'
@@ -15,6 +16,7 @@ include 'character-service:adapter-in:battle-subscribe-adapter-in'
 include 'character-service:adapter-in:battle-web-adapter-in'
 include 'character-service:adapter-in:mong-event-adapter-in'
 include 'character-service:adapter-in:mong-web-adapter-in'
+include 'character-service:adapter-in:admin-web-adapter-in'
 
 include 'character-service:adapter-out'
 include 'character-service:adapter-out:battle-persistence-adapter-out'
@@ -43,6 +45,7 @@ include 'user-service:adapter-in:device-event-adapter-in'
 include 'user-service:adapter-in:device-web-adapter-in'
 include 'user-service:adapter-in:member-event-adapter-in'
 include 'user-service:adapter-in:member-web-adapter-in'
+include 'user-service:adapter-in:admin-web-adapter-in'
 
 include 'user-service:adapter-out'
 include 'user-service:adapter-out:device-cache-adapter-out'

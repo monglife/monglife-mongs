@@ -1,0 +1,38 @@
+package com.monglife.mongs.adapter.in.admin.user.web.controller;
+
+import com.monglife.core.dto.response.ResponseDto;
+import com.monglife.module.common.logging.annotation.EntryLoggingPoint;
+import com.monglife.mongs.adapter.in.admin.user.web.dto.response.AdminExchangeStarPointProductResponseDto;
+import com.monglife.mongs.adapter.in.admin.user.web.dto.response.AdminMapTypeResponseDto;
+import com.monglife.mongs.adapter.in.admin.user.web.enums.AdapterInAdminUserWebResponse;
+import com.monglife.mongs.application.member.port.in.admin.AdminMemberMasterUseCase;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/** 마스터 데이터 읽기 전용. 수정은 SQL 배포로 한다(캐시·시드와 충돌). */
+@RestController
+@RequestMapping("/admin/master")
+@RequiredArgsConstructor
+public class AdminMasterController {
+
+    private final AdminMemberMasterUseCase adminMemberMasterUseCase;
+
+    @EntryLoggingPoint
+    @GetMapping("/map-types")
+    public ResponseEntity<ResponseDto<List<AdminMapTypeResponseDto>>> getMapTypes() {
+        List<AdminMapTypeResponseDto> items = adminMemberMasterUseCase.getMapTypesUseCase().stream().map(AdminMapTypeResponseDto::of).toList();
+        return ResponseEntity.ok(AdapterInAdminUserWebResponse.GET_MAP_TYPES.toResponseDto(items));
+    }
+
+    @EntryLoggingPoint
+    @GetMapping("/exchange-star-point-products")
+    public ResponseEntity<ResponseDto<List<AdminExchangeStarPointProductResponseDto>>> getExchangeStarPointProducts() {
+        List<AdminExchangeStarPointProductResponseDto> items = adminMemberMasterUseCase.getExchangeStarPointProductsUseCase().stream().map(AdminExchangeStarPointProductResponseDto::of).toList();
+        return ResponseEntity.ok(AdapterInAdminUserWebResponse.GET_EXCHANGE_STAR_POINT_PRODUCTS.toResponseDto(items));
+    }
+}

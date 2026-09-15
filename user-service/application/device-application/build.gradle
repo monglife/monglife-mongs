@@ -1,4 +1,6 @@
 dependencies {
     // domain layer
     api project(":user-service:domain:device-domain")
+    // 관리자 조작 감사 로그
+    implementation "org.slf4j:slf4j-api"
 }

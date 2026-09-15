@@ -1,0 +1,7 @@
+dependencies {
+    // application layer
+    implementation project(":user-service:application:member-application")
+    implementation project(":user-service:application:device-application")
+    // monglife-security
+    implementation "com.github.monglife.monglife-module-common:monglife-module-common-security:${monglifeModuleCommonVersion}"
+}

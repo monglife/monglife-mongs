@@ -4,6 +4,7 @@ dependencies {
     implementation project(":user-service:adapter-in:device-web-adapter-in")
     implementation project(":user-service:adapter-in:member-event-adapter-in")
     implementation project(":user-service:adapter-in:member-web-adapter-in")
+    implementation project(":user-service:adapter-in:admin-web-adapter-in")
 
     // adapter-out layer
     implementation project(":user-service:adapter-out:device-cache-adapter-out")
