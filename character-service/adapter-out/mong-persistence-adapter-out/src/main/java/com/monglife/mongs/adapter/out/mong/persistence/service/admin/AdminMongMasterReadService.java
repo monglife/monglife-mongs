@@ -1,10 +1,11 @@
 package com.monglife.mongs.adapter.out.mong.persistence.service.admin;
 
-import com.monglife.mongs.adapter.out.mong.persistence.entity.FoodEntity;
-import com.monglife.mongs.adapter.out.mong.persistence.entity.RandomDrawEntity;
-import com.monglife.mongs.adapter.out.mong.persistence.entity.SnackEntity;
-import com.monglife.mongs.adapter.out.mong.persistence.entity.TrainingTypeEntity;
+import com.monglife.module.common.jpa.entity.ComnCodeEntity;
+import com.monglife.module.common.jpa.entity.GroupCodeEntity;
+import com.monglife.mongs.adapter.out.mong.persistence.entity.*;
 import com.monglife.mongs.adapter.out.mong.persistence.repository.*;
+import com.monglife.mongs.application.mong.port.exception.NotExistsMasterCodeException;
+import com.monglife.mongs.application.mong.port.in.admin.command.AdminCreateMasterCommand;
 import com.monglife.mongs.application.mong.port.in.admin.vo.AdminFeedItemVo;
 import com.monglife.mongs.application.mong.port.in.admin.vo.AdminMongTypeVo;
 import com.monglife.mongs.application.mong.port.out.admin.AdminMongMasterReadPort;
@@ -21,6 +22,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminMongMasterReadService implements AdminMongMasterReadPort {
 
+    /** 종류별 공통 코드 그룹. monglife_group_code 의 시드와 같아야 한다 */
+    private static final String GROUP_MONG = "CH";
+    private static final String GROUP_FOOD = "FD";
+    private static final String GROUP_SNACK = "SN";
+    private static final String GROUP_TRAINING = "TR";
+
     private final MongTypeRepository mongTypeRepository;
 
     private final FoodRepository foodRepository;
@@ -30,6 +37,10 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
     private final TrainingTypeRepository trainingTypeRepository;
 
     private final RandomDrawRepository randomDrawRepository;
+
+    private final ComnCodeRepository comnCodeRepository;
+
+    private final GroupCodeRepository groupCodeRepository;
 
     @Override
     @Transactional
@@ -82,6 +93,100 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
                 .map(RandomDrawEntity::toDomain)
                 .sorted(Comparator.comparing(RandomDraw::getRandomDrawCode))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public Boolean isExistsComnCodePort(String code) {
+        return comnCodeRepository.existsById(code);
+    }
+
+    @Override
+    @Transactional
+    public void createMongTypePort(AdminCreateMasterCommand command) {
+        ComnCodeEntity comn = createComnCode(command, GROUP_MONG);
+        mongTypeRepository.save(MongTypeEntity.builder()
+                .comn(comn)
+                .level(command.getLevel())
+                .evolutionScore(command.getEvolutionScore())
+                .maxStatus(command.getMaxStatus())
+                .groupType(command.getGroupType())
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public void createFoodPort(AdminCreateMasterCommand command) {
+        ComnCodeEntity comn = createComnCode(command, GROUP_FOOD);
+        foodRepository.save(FoodEntity.builder()
+                .comn(comn)
+                .price(command.getPrice())
+                .weight(command.getWeight())
+                .strength(command.getStrength())
+                .satiety(command.getSatiety())
+                .healthy(command.getHealthy())
+                .fatigue(command.getFatigue())
+                .delaySeconds(command.getDelaySeconds())
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public void createSnackPort(AdminCreateMasterCommand command) {
+        ComnCodeEntity comn = createComnCode(command, GROUP_SNACK);
+        snackRepository.save(SnackEntity.builder()
+                .comn(comn)
+                .price(command.getPrice())
+                .weight(command.getWeight())
+                .strength(command.getStrength())
+                .satiety(command.getSatiety())
+                .healthy(command.getHealthy())
+                .fatigue(command.getFatigue())
+                .delaySeconds(command.getDelaySeconds())
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public void createTrainingTypePort(AdminCreateMasterCommand command) {
+        ComnCodeEntity comn = createComnCode(command, GROUP_TRAINING);
+        trainingTypeRepository.save(TrainingTypeEntity.builder()
+                .comn(comn)
+                .payPoint(command.getPayPoint())
+                .score(command.getScore())
+                .timeout(command.getTimeout())
+                .exp(command.getExp())
+                .strength(command.getStrength())
+                .weight(command.getWeight())
+                .satiety(command.getSatiety())
+                .fatigue(command.getFatigue())
+                .build());
+    }
+
+    /** 랜덤 뽑기는 이미 있는 코드를 뽑기 풀에 한 줄 더 얹는 것이다 */
+    @Override
+    @Transactional
+    public void createRandomDrawPort(AdminCreateMasterCommand command) {
+        ComnCodeEntity comn = comnCodeRepository.findById(command.getCode())
+                .orElseThrow(NotExistsMasterCodeException::new);
+        randomDrawRepository.save(RandomDrawEntity.builder()
+                .comn(comn)
+                .inventoryTypeCode(command.getInventoryTypeCode())
+                .build());
+    }
+
+    /**
+     * 공통 코드를 만들어 붙인다. 그룹 코드가 없으면 함께 만든다 —
+     * 시드가 들어가지 않은 환경(빈 DB)에서도 등록이 되게 한다.
+     */
+    private ComnCodeEntity createComnCode(AdminCreateMasterCommand command, String groupCode) {
+        GroupCodeEntity group = groupCodeRepository.findById(groupCode)
+                .orElseGet(() -> groupCodeRepository.save(GroupCodeEntity.builder().code(groupCode).name(groupCode).build()));
+        return comnCodeRepository.save(ComnCodeEntity.builder()
+                .code(command.getCode())
+                .name(command.getName())
+                .group(group)
+                .build());
     }
 
     private AdminFeedItemVo toVo(FoodEntity entity) {

@@ -4,6 +4,7 @@ import com.monglife.core.dto.response.ResponseDto;
 import com.monglife.core.enums.response.GlobalResponse;
 import com.monglife.core.exception.ErrorException;
 import com.monglife.mongs.adapter.in.admin.character.web.controller.AdminHealthController;
+import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMasterCodeException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsTaskException;
 import com.monglife.mongs.application.battle.port.exception.NotExistsMatchException;
@@ -38,6 +39,14 @@ public class AdminCharacterExceptionHandler {
                 .body(e.getErrorCode().toResponseDto(HttpStatus.NOT_FOUND.value(), e.getResult()));
     }
 
+
+    /** 이미 있는 코드로 등록을 시도한 경우 */
+    @ExceptionHandler(AlreadyExistsMasterCodeException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleConflict(ErrorException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT.value())
+                .body(e.getErrorCode().toResponseDto(HttpStatus.CONFLICT.value(), e.getResult()));
+    }
     @ExceptionHandler(ErrorException.class)
     public ResponseEntity<ResponseDto<Map<String, Object>>> handleErrorException(ErrorException e) {
         return ResponseEntity

@@ -4,16 +4,24 @@ import com.monglife.core.dto.response.ResponseDto;
 import com.monglife.module.common.logging.annotation.EntryLoggingPoint;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.response.*;
 import com.monglife.mongs.adapter.in.admin.character.web.enums.AdapterInAdminCharacterWebResponse;
+import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMasterCreateRequestDto;
 import com.monglife.mongs.application.mong.port.in.admin.AdminMongMasterUseCase;
+import com.monglife.mongs.application.mong.port.in.admin.command.AdminCreateMasterCommand;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /** 마스터 데이터 읽기 전용. 수정은 SQL 배포로 한다(캐시·시드와 충돌) */
+@Validated
 @RestController
 @RequestMapping("/admin/master")
 @RequiredArgsConstructor
@@ -54,5 +62,42 @@ public class AdminMasterController {
     public ResponseEntity<ResponseDto<List<AdminRandomDrawResponseDto>>> getRandomDraws() {
         List<AdminRandomDrawResponseDto> items = adminMongMasterUseCase.getRandomDrawsUseCase().stream().map(AdminRandomDrawResponseDto::of).toList();
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.GET_RANDOM_DRAWS.toResponseDto(items));
+    }
+
+    /**
+     * 마스터 데이터 등록. 종류를 body 의 kind 로 받는다 —
+     * 화면이 종류 셀렉트 하나로 폼을 바꿔 쓰는 구조라 경로를 나누지 않았다.
+     */
+    @EntryLoggingPoint
+    @PostMapping
+    public ResponseEntity<ResponseDto<Map<String, Object>>> createMaster(@Valid @RequestBody AdminMasterCreateRequestDto requestDto) {
+
+        AdminCreateMasterCommand command = AdminCreateMasterCommand.builder()
+                .code(requestDto.getCode())
+                .name(requestDto.getName())
+                .level(requestDto.getLevel())
+                .evolutionScore(requestDto.getEvolutionScore())
+                .maxStatus(requestDto.getMaxStatus())
+                .groupType(requestDto.getGroupType())
+                .price(requestDto.getPrice())
+                .weight(requestDto.getWeight())
+                .strength(requestDto.getStrength())
+                .satiety(requestDto.getSatiety())
+                .healthy(requestDto.getHealthy())
+                .fatigue(requestDto.getFatigue())
+                .delaySeconds(requestDto.getDelaySeconds())
+                .payPoint(requestDto.getPayPoint())
+                .score(requestDto.getScore())
+                .timeout(requestDto.getTimeout())
+                .exp(requestDto.getExp())
+                .inventoryTypeCode(requestDto.getInventoryTypeCode())
+                .build();
+
+        adminMongMasterUseCase.createMasterUseCase(requestDto.getKind(), command);
+
+        return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.CREATE_MASTER.toResponseDto(Map.of(
+                "kind", requestDto.getKind().name(),
+                "code", requestDto.getCode()
+        )));
     }
 }

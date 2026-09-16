@@ -32,6 +32,7 @@ public enum AdapterInAdminCharacterWebResponse implements Response {
     GET_SNACKS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-032", "간식 목록 조회에 성공했습니다."),
     GET_TRAINING_TYPES(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-033", "훈련 타입 목록 조회에 성공했습니다."),
     GET_RANDOM_DRAWS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-034", "랜덤 뽑기 아이템 목록 조회에 성공했습니다."),
+    CREATE_MASTER(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-035", "마스터 데이터 등록에 성공했습니다."),
 
     GET_QUEUE_PLAYERS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-040", "매치 대기열 조회에 성공했습니다."),
     DELETE_QUEUE_PLAYER(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-041", "매치 대기열 강제 이탈에 성공했습니다."),
