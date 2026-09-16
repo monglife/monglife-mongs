@@ -1,5 +1,6 @@
 package com.monglife.mongs.application.member.port.in.admin.service;
 
+import com.monglife.mongs.common.admin.log.AdminAuditLog;
 import com.monglife.mongs.application.member.port.exception.NotExistsOrderException;
 import com.monglife.mongs.application.member.port.in.StoreUseCase;
 import com.monglife.mongs.application.member.port.in.admin.AdminOrderUseCase;
@@ -77,7 +78,7 @@ public class AdminOrderService implements AdminOrderUseCase {
         AdminOrderVo adminOrderVo = adminOrderReadPort.getOrderPort(orderId)
                 .orElseThrow(NotExistsOrderException::new);
 
-        log.info("[admin] reconsume order orderId={} accountId={}", orderId, adminOrderVo.getAccountId());
+        AdminAuditLog.write("reconsume order orderId={} accountId={}", orderId, adminOrderVo.getAccountId());
 
         return storeUseCase.consumeOrderUseCase(ConsumeOrderCommand.builder()
                 .socialOrderId(adminOrderVo.getSocialOrderId())

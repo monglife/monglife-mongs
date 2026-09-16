@@ -1,5 +1,6 @@
 package com.monglife.mongs.application.battle.port.in.admin.service;
 
+import com.monglife.mongs.common.admin.log.AdminAuditLog;
 import com.monglife.mongs.application.battle.port.exception.NotExistsMatchException;
 import com.monglife.mongs.application.battle.port.exception.NotExistsQueuePlayerException;
 import com.monglife.mongs.application.battle.port.in.QueueUseCase;
@@ -18,7 +19,6 @@ import com.monglife.mongs.domain.battle.enums.MatchStateCode;
 import com.monglife.mongs.domain.battle.model.Match;
 import com.monglife.mongs.domain.battle.model.QueuePlayer;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminBattleService implements AdminBattleUseCase {
@@ -55,7 +54,7 @@ public class AdminBattleService implements AdminBattleUseCase {
                 .findFirst()
                 .orElseThrow(NotExistsQueuePlayerException::new);
 
-        log.info("[admin] queue player removed mongId={} accountId={} deviceId={}", mongId, queuePlayer.getAccountId(), queuePlayer.getDeviceId());
+        AdminAuditLog.write("queue player removed mongId={} accountId={} deviceId={}", mongId, queuePlayer.getAccountId(), queuePlayer.getDeviceId());
 
         return queueUseCase.deleteQueuePlayerUseCase(DeleteQueuePlayerCommand.builder()
                 .mongId(queuePlayer.getMongId())
@@ -89,7 +88,7 @@ public class AdminBattleService implements AdminBattleUseCase {
         match = matchPersistencePort.saveMatchPort(match)
                 .orElseThrow(NotExistsMatchException::new);
 
-        log.info("[admin] match terminated matchId={}", matchId);
+        AdminAuditLog.write("match terminated matchId={}", matchId);
 
         // 매치 강제 중단 비동기 응답
         matchPublishPort.publishMatchEndPort(match);

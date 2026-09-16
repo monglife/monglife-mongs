@@ -1,14 +1,13 @@
 package com.monglife.mongs.application.device.port.in.admin.service;
 
+import com.monglife.mongs.common.admin.log.AdminAuditLog;
 import com.monglife.mongs.application.device.port.in.admin.AdminStepUseCase;
 import com.monglife.mongs.application.device.port.in.admin.vo.AdminStepVo;
 import com.monglife.mongs.application.device.port.out.admin.AdminDeviceCachePort;
 import com.monglife.mongs.domain.device.model.Step;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminStepService implements AdminStepUseCase {
@@ -25,7 +24,7 @@ public class AdminStepService implements AdminStepUseCase {
 
         adminDeviceCachePort.resetTodayExchangedWalkingCountPort(accountId);
 
-        log.info("[admin] daily step exchange limit reset accountId={}", accountId);
+        AdminAuditLog.write("daily step exchange limit reset accountId={}", accountId);
 
         return this.toVo(accountId, 0);
     }

@@ -1,5 +1,6 @@
 package com.monglife.mongs.application.member.port.in.admin.service;
 
+import com.monglife.mongs.common.admin.log.AdminAuditLog;
 import com.monglife.mongs.application.member.port.exception.InvalidAdminSlotCountException;
 import com.monglife.mongs.application.member.port.exception.NotExistsPlayerException;
 import com.monglife.mongs.application.member.port.in.admin.AdminMemberUseCase;
@@ -19,13 +20,11 @@ import com.monglife.mongs.domain.member.model.CollectionMap;
 import com.monglife.mongs.domain.member.model.CollectionMong;
 import com.monglife.mongs.domain.member.model.Player;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminMemberService implements AdminMemberUseCase {
@@ -70,7 +69,7 @@ public class AdminMemberService implements AdminMemberUseCase {
         memberPersistencePort.savePlayerPort(player)
                 .orElseThrow(NotExistsPlayerException::new);
 
-        log.info("[admin] star point adjusted accountId={} before={} delta={} after={} reason={}",
+        AdminAuditLog.write("star point adjusted accountId={} before={} delta={} after={} reason={}",
                 player.getAccountId(), before, command.getDelta(), player.getStarPoint(), command.getReason());
 
         // 스타 포인트 비동기 응답
@@ -95,7 +94,7 @@ public class AdminMemberService implements AdminMemberUseCase {
         memberPersistencePort.savePlayerPort(player)
                 .orElseThrow(NotExistsPlayerException::new);
 
-        log.info("[admin] slot count updated accountId={} slotCount={}", player.getAccountId(), player.getSlotCount());
+        AdminAuditLog.write("slot count updated accountId={} slotCount={}", player.getAccountId(), player.getSlotCount());
 
         // 슬롯 수 비동기 응답
         memberPublishPort.publishSlotCountPort(player);
@@ -119,7 +118,7 @@ public class AdminMemberService implements AdminMemberUseCase {
     @Transactional
     public List<CollectionMap> grantCollectionMapUseCase(Long accountId, String mapCode) {
 
-        log.info("[admin] collection map granted accountId={} mapCode={}", accountId, mapCode);
+        AdminAuditLog.write("collection map granted accountId={} mapCode={}", accountId, mapCode);
 
         collectionUseCase.createCollectionMapUseCase(CreateCollectionMapCommand.builder()
                 .accountId(accountId)
@@ -133,7 +132,7 @@ public class AdminMemberService implements AdminMemberUseCase {
     @Transactional
     public List<CollectionMong> grantCollectionMongUseCase(Long accountId, String mongCode) {
 
-        log.info("[admin] collection mong granted accountId={} mongCode={}", accountId, mongCode);
+        AdminAuditLog.write("collection mong granted accountId={} mongCode={}", accountId, mongCode);
 
         collectionUseCase.createCollectionMongUseCase(CreateCollectionMongCommand.builder()
                 .accountId(accountId)

@@ -1,5 +1,6 @@
 package com.monglife.mongs.application.mong.port.in.admin.service;
 
+import com.monglife.mongs.common.admin.log.AdminAuditLog;
 import com.monglife.core.vo.page.PageResult;
 import com.monglife.mongs.application.mong.port.annotation.PublishMongPort;
 import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
@@ -10,10 +11,13 @@ import com.monglife.mongs.application.mong.port.exception.NotExistsTaskException
 import com.monglife.mongs.application.mong.port.in.ManagementUseCase;
 import com.monglife.mongs.application.mong.port.in.admin.AdminMongUseCase;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminGetMongsCommand;
+import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongSleepCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStateCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStatusCommand;
 import com.monglife.mongs.application.mong.port.in.admin.vo.AdminTaskVo;
 import com.monglife.mongs.application.mong.port.in.command.DeleteMongCommand;
+import com.monglife.mongs.application.mong.port.in.command.SleepMongCommand;
+import com.monglife.mongs.application.mong.port.in.command.WakeupMongCommand;
 import com.monglife.mongs.application.mong.port.out.MongPersistencePort;
 import com.monglife.mongs.application.mong.port.out.MongReadPort;
 import com.monglife.mongs.application.mong.port.out.MongSchedulerPort;
@@ -27,13 +31,11 @@ import com.monglife.mongs.domain.mong.model.Inventory;
 import com.monglife.mongs.domain.mong.model.Mong;
 import com.monglife.mongs.domain.mong.model.MongEvolutionHistory;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminMongService implements AdminMongUseCase {
@@ -91,7 +93,7 @@ public class AdminMongService implements AdminMongUseCase {
             }
         }
 
-        log.info("[admin] mong status updated mongId={} accountId={} reason={} mong={}",
+        AdminAuditLog.write("mong status updated mongId={} accountId={} reason={} mong={}",
                 mong.getMongId(), mong.getAccountId(), command.getReason(), mong);
 
         return mong;
@@ -126,7 +128,7 @@ public class AdminMongService implements AdminMongUseCase {
             this.restoreTasks(mong);
         }
 
-        log.info("[admin] mong state updated mongId={} accountId={} before={} after={} reason={}",
+        AdminAuditLog.write("mong state updated mongId={} accountId={} before={} after={} reason={}",
                 mong.getMongId(), mong.getAccountId(), before, after, command.getReason());
 
         return mong;
@@ -159,6 +161,33 @@ public class AdminMongService implements AdminMongUseCase {
                 .orElseThrow(InvalidCreateMongScheduleException::new);
     }
 
+    /**
+     * 수면·기상 전환. 상태 검증(사망·알 단계·이미 그 상태)과 스케줄 교체가 전부 기존
+     * 유스케이스 안에 있으므로 그대로 위임한다. 소유자 검증을 통과시키려고 몽의 계정 ID 를 넘긴다.
+     */
+    @Override
+    @Transactional
+    public Mong updateMongSleepUseCase(AdminUpdateMongSleepCommand command) {
+
+        Mong mong = mongReadPort.getMongPort(command.getMongId())
+                .orElseThrow(NotExistsMongException::new);
+
+        AdminAuditLog.write("mong sleep changed mongId={} accountId={} isSleep={} reason={}",
+                mong.getMongId(), mong.getAccountId(), command.getIsSleep(), command.getReason());
+
+        if (Boolean.TRUE.equals(command.getIsSleep())) {
+            return managementUseCase.sleepMongUseCase(SleepMongCommand.builder()
+                    .mongId(mong.getMongId())
+                    .accountId(mong.getAccountId())
+                    .build());
+        }
+
+        return managementUseCase.wakeUpMongUseCase(WakeupMongCommand.builder()
+                .mongId(mong.getMongId())
+                .accountId(mong.getAccountId())
+                .build());
+    }
+
     @Override
     @Transactional
     public Mong deleteMongUseCase(Long mongId) {
@@ -166,7 +195,7 @@ public class AdminMongService implements AdminMongUseCase {
         Mong mong = mongReadPort.getMongPort(mongId)
                 .orElseThrow(NotExistsMongException::new);
 
-        log.info("[admin] mong deleted mongId={} accountId={}", mong.getMongId(), mong.getAccountId());
+        AdminAuditLog.write("mong deleted mongId={} accountId={}", mong.getMongId(), mong.getAccountId());
 
         // 소유자 검증을 통과시키려고 몽의 계정 ID 를 그대로 넘긴다
         return managementUseCase.deleteMongUseCase(DeleteMongCommand.builder()
@@ -184,7 +213,7 @@ public class AdminMongService implements AdminMongUseCase {
     @Override
     @Transactional
     public AdminTaskVo pauseTaskUseCase(Long taskId) {
-        log.info("[admin] task paused taskId={}", taskId);
+        AdminAuditLog.write("task paused taskId={}", taskId);
         return adminMongSchedulerPort.pauseTaskPort(taskId)
                 .orElseThrow(NotExistsTaskException::new);
     }
@@ -192,7 +221,7 @@ public class AdminMongService implements AdminMongUseCase {
     @Override
     @Transactional
     public AdminTaskVo resumeTaskUseCase(Long taskId) {
-        log.info("[admin] task resumed taskId={}", taskId);
+        AdminAuditLog.write("task resumed taskId={}", taskId);
         return adminMongSchedulerPort.resumeTaskPort(taskId)
                 .orElseThrow(NotExistsTaskException::new);
     }
@@ -219,7 +248,7 @@ public class AdminMongService implements AdminMongUseCase {
         Mong mong = mongReadPort.getMongPort(mongId)
                 .orElseThrow(NotExistsMongException::new);
 
-        log.info("[admin] inventory granted mongId={} accountId={} code={} type={}", mongId, mong.getAccountId(), inventoryCode, inventoryTypeCode);
+        AdminAuditLog.write("inventory granted mongId={} accountId={} code={} type={}", mongId, mong.getAccountId(), inventoryCode, inventoryTypeCode);
 
         return mongPersistencePort.createInventoryPort(CreateInventoryVo.builder()
                         .mongId(mongId)

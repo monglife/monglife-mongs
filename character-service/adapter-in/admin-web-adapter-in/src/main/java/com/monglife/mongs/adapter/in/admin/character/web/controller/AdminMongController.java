@@ -5,6 +5,7 @@ import com.monglife.core.dto.response.ResponseDto;
 import com.monglife.core.vo.page.PageResult;
 import com.monglife.module.common.logging.annotation.EntryLoggingPoint;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminInventoryGrantRequestDto;
+import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongSleepRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongStateRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongStatusRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.response.*;
@@ -13,6 +14,7 @@ import com.monglife.mongs.adapter.in.admin.character.web.util.AdminPage;
 import com.monglife.mongs.adapter.in.admin.character.web.util.PageQuery;
 import com.monglife.mongs.application.mong.port.in.admin.AdminMongUseCase;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminGetMongsCommand;
+import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongSleepCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStateCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStatusCommand;
 import com.monglife.mongs.domain.mong.enums.MongStateCode;
@@ -86,6 +88,22 @@ public class AdminMongController {
                 .build();
 
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.UPDATE_MONG_STATUS.toResponseDto(AdminMongResponseDto.of(adminMongUseCase.updateMongStatusUseCase(command))));
+    }
+
+    /** 수면·기상 전환. 지수 증감 스케줄도 앱에서 누른 것과 같이 교체된다 */
+    @EntryLoggingPoint
+    @PatchMapping("/{mongId}/sleep")
+    public ResponseEntity<ResponseDto<AdminMongResponseDto>> updateSleep(
+            @PathVariable Long mongId,
+            @Valid @RequestBody AdminMongSleepRequestDto requestDto
+    ) {
+        AdminUpdateMongSleepCommand command = AdminUpdateMongSleepCommand.builder()
+                .mongId(mongId)
+                .isSleep(requestDto.getIsSleep())
+                .reason(requestDto.getReason())
+                .build();
+
+        return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.UPDATE_MONG_SLEEP.toResponseDto(AdminMongResponseDto.of(adminMongUseCase.updateMongSleepUseCase(command))));
     }
 
     @EntryLoggingPoint
