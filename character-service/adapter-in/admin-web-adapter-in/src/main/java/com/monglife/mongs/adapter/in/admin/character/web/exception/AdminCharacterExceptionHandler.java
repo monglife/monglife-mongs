@@ -5,6 +5,10 @@ import com.monglife.core.enums.response.GlobalResponse;
 import com.monglife.core.exception.ErrorException;
 import com.monglife.mongs.adapter.in.admin.character.web.controller.AdminHealthController;
 import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMasterCodeException;
+import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMissionCodeException;
+import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalException;
+import com.monglife.mongs.application.mong.port.exception.MissionInUseException;
+import com.monglife.mongs.application.mong.port.exception.NotExistsMissionException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMasterException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsTaskException;
@@ -33,7 +37,7 @@ import java.util.Set;
 @RestControllerAdvice(basePackageClasses = AdminHealthController.class)
 public class AdminCharacterExceptionHandler {
 
-    @ExceptionHandler({ NotExistsMongException.class, NotExistsTaskException.class, NotExistsMatchException.class, NotExistsQueuePlayerException.class, NotExistsMasterException.class })
+    @ExceptionHandler({ NotExistsMongException.class, NotExistsTaskException.class, NotExistsMatchException.class, NotExistsQueuePlayerException.class, NotExistsMasterException.class, NotExistsMissionException.class })
     public ResponseEntity<ResponseDto<Map<String, Object>>> handleNotFound(ErrorException e) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND.value())
@@ -41,8 +45,8 @@ public class AdminCharacterExceptionHandler {
     }
 
 
-    /** 이미 있는 코드로 등록을 시도한 경우 */
-    @ExceptionHandler(AlreadyExistsMasterCodeException.class)
+    /** 이미 있는 코드로 등록했거나, 다른 주기와 겹치거나, 쓰이는 중인 미션을 지우려 한 경우 */
+    @ExceptionHandler({ AlreadyExistsMasterCodeException.class, AlreadyExistsMissionCodeException.class, DuplicatedMissionGoalException.class, MissionInUseException.class })
     public ResponseEntity<ResponseDto<Map<String, Object>>> handleConflict(ErrorException e) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT.value())

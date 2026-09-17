@@ -41,6 +41,11 @@ public enum AdapterInAdminCharacterWebResponse implements Response {
     GET_MATCH(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-043", "매치 조회에 성공했습니다."),
     TERMINATE_MATCH(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-044", "매치 강제 종료에 성공했습니다."),
     GET_BATTLE_STATS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-045", "배틀 통계 조회에 성공했습니다."),
+
+    GET_MISSIONS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-050", "미션 목록 조회에 성공했습니다."),
+    CREATE_MISSION(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-051", "미션 등록에 성공했습니다."),
+    DELETE_MISSION(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-052", "미션 삭제에 성공했습니다."),
+    GET_ACCOUNT_MISSIONS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-053", "사용자 미션 진행 현황 조회에 성공했습니다."),
     ;
 
     private final Integer httpStatus;

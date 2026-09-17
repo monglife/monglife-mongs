@@ -588,6 +588,22 @@ public class Mong {
     }
 
     /**
+     * 미션 리워드 경험치 지급
+     *
+     * <p>매치 보상과 같은 규칙이다 - maxStatus 로 자르고 상태 코드를 동기화한다.
+     * 동기화를 빼면 미션 경험치로 진화 조건을 넘겨도 EVOLUTION_READY 가 안 되어
+     * 클라이언트가 진화 버튼을 띄우지 못한다.
+     *
+     * @param exp 보상 경험치
+     */
+    public void missionReward(Double exp) {
+        this.exp = Math.max(0, Math.min(this.exp + exp, this.maxStatus));
+
+        // 몽 상태 코드 동기화
+        this.syncMongStateCode();
+    }
+
+    /**
      * 몽 상태 코드 동기화
      */
     private void syncMongStateCode() {

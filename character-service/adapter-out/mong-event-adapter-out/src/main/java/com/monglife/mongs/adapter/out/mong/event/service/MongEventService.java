@@ -3,6 +3,7 @@ package com.monglife.mongs.adapter.out.mong.event.service;
 import com.monglife.module.common.kafka.service.KafkaService;
 import com.monglife.mongs.adapter.transaction.CreateMongEventDto;
 import com.monglife.mongs.adapter.transaction.EvolutionMongEventDto;
+import com.monglife.mongs.adapter.transaction.MissionRewardStarPointEventDto;
 import com.monglife.mongs.adapter.transaction.RandomDrawMapEventDto;
 import com.monglife.mongs.application.mong.port.out.MongEventPort;
 import com.monglife.mongs.core.kafka.event.enums.EventTopic;
@@ -54,6 +55,22 @@ public class MongEventService  implements MongEventPort {
         kafkaService.generateEventWithProfile(EventTopic.COMMIT_RANDOM_DRAW_MAP, RandomDrawMapEventDto.builder()
                 .accountId(accountId)
                 .mapCode(mapCode)
+                .build());
+    }
+
+    /**
+     * 미션 리워드 스타 포인트 지급 이벤트 발생
+     * @param accountId 계정 ID
+     * @param starPoint 지급 스타 포인트
+     * @param missionCode 미션 코드
+     */
+    @Override
+    public void missionRewardStarPointEventPort(Long accountId, Integer starPoint, String missionCode) {
+
+        kafkaService.generateEventWithProfile(EventTopic.COMMIT_MISSION_REWARD_STAR_POINT, MissionRewardStarPointEventDto.builder()
+                .accountId(accountId)
+                .starPoint(starPoint)
+                .missionCode(missionCode)
                 .build());
     }
 }
