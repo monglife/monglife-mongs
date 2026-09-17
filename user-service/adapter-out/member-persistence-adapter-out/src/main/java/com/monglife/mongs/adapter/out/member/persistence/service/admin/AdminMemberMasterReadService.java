@@ -62,16 +62,44 @@ public class AdminMemberMasterReadService implements AdminMemberMasterReadPort {
                 .toList();
     }
 
+
     @Override
     @Transactional
-    public Boolean isExistsComnCodePort(String code) {
-        return comnCodeRepository.existsById(code);
+    public Boolean isExistsMapTypePort(String code) {
+        return mapTypeRepository.findByComnCode(code).isPresent();
     }
 
     @Override
     @Transactional
+    public Boolean isExistsExchangeStarPointProductPort(String productId) {
+        return exchangeStarPointProductRepository.findByProductId(productId).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteMapTypePort(Long id) {
+        return mapTypeRepository.findById(id)
+                .map(entity -> {
+                    mapTypeRepository.delete(entity);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteExchangeStarPointProductPort(String productId) {
+        return exchangeStarPointProductRepository.findByProductId(productId)
+                .map(entity -> {
+                    exchangeStarPointProductRepository.delete(entity);
+                    return true;
+                })
+                .orElse(false);
+    }
+    @Override
+    @Transactional
     public void createMapTypePort(AdminCreateMasterCommand command) {
-        ComnCodeEntity comn = createComnCode(command, GROUP_MAP);
+        ComnCodeEntity comn = comnCode(command, GROUP_MAP);
         mapTypeRepository.save(MapTypeEntity.builder()
                 .comn(comn)
                 .words(command.getWords())
@@ -85,7 +113,7 @@ public class AdminMemberMasterReadService implements AdminMemberMasterReadPort {
     @Override
     @Transactional
     public void createExchangeStarPointProductPort(AdminCreateMasterCommand command) {
-        createComnCode(command, GROUP_PRODUCT);
+        comnCode(command, GROUP_PRODUCT);
         exchangeStarPointProductRepository.save(ExchangeStarPointProductEntity.builder()
                 .productId(command.getCode())
                 .productName(command.getName())
@@ -97,13 +125,15 @@ public class AdminMemberMasterReadService implements AdminMemberMasterReadPort {
      * 공통 코드를 만들어 붙인다. 그룹 코드가 없으면 함께 만든다 —
      * 시드가 들어가지 않은 환경(빈 DB)에서도 등록이 되게 한다.
      */
-    private ComnCodeEntity createComnCode(AdminCreateMasterCommand command, String groupCode) {
-        GroupCodeEntity group = groupCodeRepository.findById(groupCode)
-                .orElseGet(() -> groupCodeRepository.save(GroupCodeEntity.builder().code(groupCode).name(groupCode).build()));
-        return comnCodeRepository.save(ComnCodeEntity.builder()
-                .code(command.getCode())
-                .name(command.getName())
-                .group(group)
-                .build());
+    private ComnCodeEntity comnCode(AdminCreateMasterCommand command, String groupCode) {
+        return comnCodeRepository.findById(command.getCode()).orElseGet(() -> {
+            GroupCodeEntity group = groupCodeRepository.findById(groupCode)
+                    .orElseGet(() -> groupCodeRepository.save(GroupCodeEntity.builder().code(groupCode).name(groupCode).build()));
+            return comnCodeRepository.save(ComnCodeEntity.builder()
+                    .code(command.getCode())
+                    .name(command.getName())
+                    .group(group)
+                    .build());
+        });
     }
 }

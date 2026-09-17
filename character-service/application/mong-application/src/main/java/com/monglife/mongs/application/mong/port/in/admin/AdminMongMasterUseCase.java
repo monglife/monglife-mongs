@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface AdminMongMasterUseCase {
 
-    /** 등록 가능한 마스터 데이터 종류 */
+    /** 등록·삭제 가능한 마스터 데이터 종류 */
     enum Kind {
         MONG_TYPE,
         FOOD,
@@ -31,4 +31,7 @@ public interface AdminMongMasterUseCase {
 
     /** 마스터 데이터 등록 */
     void createMasterUseCase(Kind kind, AdminCreateMasterCommand command);
+
+    /** 마스터 데이터 삭제. 표의 행만 지우고 공통 코드는 남긴다 */
+    void deleteMasterUseCase(Kind kind, Long id);
 }

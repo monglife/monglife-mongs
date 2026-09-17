@@ -12,7 +12,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,5 +64,16 @@ public class AdminMasterController {
                 "kind", requestDto.getKind().name(),
                 "code", requestDto.getCode()
         )));
+    }
+
+    /** 마스터 데이터 삭제. 표의 행만 지우고 공통 코드는 남긴다 */
+    @EntryLoggingPoint
+    @DeleteMapping("/{kind}/{id}")
+    public ResponseEntity<ResponseDto<Map<String, Object>>> deleteMaster(
+            @PathVariable AdminMemberMasterUseCase.Kind kind,
+            @PathVariable String id
+    ) {
+        adminMemberMasterUseCase.deleteMasterUseCase(kind, id);
+        return ResponseEntity.ok(AdapterInAdminUserWebResponse.DELETE_MASTER.toResponseDto(Map.of("kind", kind.name(), "id", id)));
     }
 }

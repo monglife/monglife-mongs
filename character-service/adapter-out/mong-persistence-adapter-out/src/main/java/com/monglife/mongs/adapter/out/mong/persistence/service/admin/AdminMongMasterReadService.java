@@ -12,6 +12,7 @@ import com.monglife.mongs.application.mong.port.out.admin.AdminMongMasterReadPor
 import com.monglife.mongs.domain.mong.model.RandomDraw;
 import com.monglife.mongs.domain.mong.model.TrainingType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,7 +105,7 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
     @Override
     @Transactional
     public void createMongTypePort(AdminCreateMasterCommand command) {
-        ComnCodeEntity comn = createComnCode(command, GROUP_MONG);
+        ComnCodeEntity comn = comnCode(command, GROUP_MONG);
         mongTypeRepository.save(MongTypeEntity.builder()
                 .comn(comn)
                 .level(command.getLevel())
@@ -117,7 +118,7 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
     @Override
     @Transactional
     public void createFoodPort(AdminCreateMasterCommand command) {
-        ComnCodeEntity comn = createComnCode(command, GROUP_FOOD);
+        ComnCodeEntity comn = comnCode(command, GROUP_FOOD);
         foodRepository.save(FoodEntity.builder()
                 .comn(comn)
                 .price(command.getPrice())
@@ -133,7 +134,7 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
     @Override
     @Transactional
     public void createSnackPort(AdminCreateMasterCommand command) {
-        ComnCodeEntity comn = createComnCode(command, GROUP_SNACK);
+        ComnCodeEntity comn = comnCode(command, GROUP_SNACK);
         snackRepository.save(SnackEntity.builder()
                 .comn(comn)
                 .price(command.getPrice())
@@ -149,7 +150,7 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
     @Override
     @Transactional
     public void createTrainingTypePort(AdminCreateMasterCommand command) {
-        ComnCodeEntity comn = createComnCode(command, GROUP_TRAINING);
+        ComnCodeEntity comn = comnCode(command, GROUP_TRAINING);
         trainingTypeRepository.save(TrainingTypeEntity.builder()
                 .comn(comn)
                 .payPoint(command.getPayPoint())
@@ -179,16 +180,88 @@ public class AdminMongMasterReadService implements AdminMongMasterReadPort {
      * 공통 코드를 만들어 붙인다. 그룹 코드가 없으면 함께 만든다 —
      * 시드가 들어가지 않은 환경(빈 DB)에서도 등록이 되게 한다.
      */
-    private ComnCodeEntity createComnCode(AdminCreateMasterCommand command, String groupCode) {
-        GroupCodeEntity group = groupCodeRepository.findById(groupCode)
-                .orElseGet(() -> groupCodeRepository.save(GroupCodeEntity.builder().code(groupCode).name(groupCode).build()));
-        return comnCodeRepository.save(ComnCodeEntity.builder()
-                .code(command.getCode())
-                .name(command.getName())
-                .group(group)
-                .build());
+    private ComnCodeEntity comnCode(AdminCreateMasterCommand command, String groupCode) {
+        return comnCodeRepository.findById(command.getCode()).orElseGet(() -> {
+            GroupCodeEntity group = groupCodeRepository.findById(groupCode)
+                    .orElseGet(() -> groupCodeRepository.save(GroupCodeEntity.builder().code(groupCode).name(groupCode).build()));
+            return comnCodeRepository.save(ComnCodeEntity.builder()
+                    .code(command.getCode())
+                    .name(command.getName())
+                    .group(group)
+                    .build());
+        });
     }
 
+
+    @Override
+    @Transactional
+    public Boolean isExistsMongTypePort(String code) {
+        return mongTypeRepository.findByComnCode(code).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public Boolean isExistsFoodPort(String code) {
+        return foodRepository.findByComnCode(code).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public Boolean isExistsSnackPort(String code) {
+        return snackRepository.findByComnCode(code).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public Boolean isExistsTrainingTypePort(String code) {
+        return trainingTypeRepository.findByComnCode(code).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteMongTypePort(Long id) {
+        // MongTypeRepository 의 ID 타입은 String(코드)이라 findById 를 쓸 수 없다
+        return mongTypeRepository.findByMongTypeId(id)
+                .map(entity -> {
+                    mongTypeRepository.delete(entity);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteFoodPort(Long id) {
+        return delete(foodRepository, id);
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteSnackPort(Long id) {
+        return delete(snackRepository, id);
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteTrainingTypePort(Long id) {
+        return delete(trainingTypeRepository, id);
+    }
+
+    @Override
+    @Transactional
+    public Boolean deleteRandomDrawPort(Long id) {
+        return delete(randomDrawRepository, id);
+    }
+
+    /** 없으면 false. 지우려던 행이 이미 없는 것과 실패를 호출 쪽이 구분할 수 있게 한다 */
+    private <T> Boolean delete(JpaRepository<T, Long> repository, Long id) {
+        return repository.findById(id)
+                .map(entity -> {
+                    repository.delete(entity);
+                    return true;
+                })
+                .orElse(false);
+    }
     private AdminFeedItemVo toVo(FoodEntity entity) {
         return AdminFeedItemVo.builder()
                 .id(entity.getFoodId())

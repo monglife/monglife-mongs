@@ -40,6 +40,7 @@ public enum AdapterInAdminUserWebResponse implements Response {
     GET_MAP_TYPES(HttpStatus.OK.value(), "MONGS-USER-ADMIN-050", "맵 타입 목록 조회에 성공했습니다."),
     GET_EXCHANGE_STAR_POINT_PRODUCTS(HttpStatus.OK.value(), "MONGS-USER-ADMIN-051", "스타 포인트 환전 상품 목록 조회에 성공했습니다."),
     CREATE_MASTER(HttpStatus.OK.value(), "MONGS-USER-ADMIN-052", "마스터 데이터 등록에 성공했습니다."),
+    DELETE_MASTER(HttpStatus.OK.value(), "MONGS-USER-ADMIN-053", "마스터 데이터 삭제에 성공했습니다."),
     ;
 
     private final Integer httpStatus;

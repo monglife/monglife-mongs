@@ -1,6 +1,7 @@
 package com.monglife.mongs.application.member.port.in.admin.service;
 
 import com.monglife.mongs.application.member.port.exception.AlreadyExistsMasterCodeException;
+import com.monglife.mongs.application.member.port.exception.NotExistsMasterException;
 import com.monglife.mongs.application.member.port.in.admin.AdminMemberMasterUseCase;
 import com.monglife.mongs.application.member.port.in.admin.command.AdminCreateMasterCommand;
 import com.monglife.mongs.application.member.port.in.admin.vo.AdminExchangeStarPointProductVo;
@@ -35,9 +36,12 @@ public class AdminMemberMasterService implements AdminMemberMasterUseCase {
     @Transactional
     public void createMasterUseCase(Kind kind, AdminCreateMasterCommand command) {
 
-        if (Boolean.TRUE.equals(adminMemberMasterReadPort.isExistsComnCodePort(command.getCode()))) {
-            throw new AlreadyExistsMasterCodeException();
-        }
+        boolean exists = switch (kind) {
+            case MAP_TYPE -> Boolean.TRUE.equals(adminMemberMasterReadPort.isExistsMapTypePort(command.getCode()));
+            case EXCHANGE_STAR_POINT_PRODUCT -> Boolean.TRUE.equals(adminMemberMasterReadPort.isExistsExchangeStarPointProductPort(command.getCode()));
+        };
+
+        if (exists) throw new AlreadyExistsMasterCodeException();
 
         AdminAuditLog.write("master created kind={} code={} name={}", kind, command.getCode(), command.getName());
 
@@ -45,5 +49,23 @@ public class AdminMemberMasterService implements AdminMemberMasterUseCase {
             case MAP_TYPE -> adminMemberMasterReadPort.createMapTypePort(command);
             case EXCHANGE_STAR_POINT_PRODUCT -> adminMemberMasterReadPort.createExchangeStarPointProductPort(command);
         }
+    }
+
+    /**
+     * 마스터 데이터 삭제. 표의 행만 지우고 공통 코드는 남긴다 —
+     * 주문·도감이 코드를 참조하고 있어 함께 지우면 그 행들이 깨진다.
+     */
+    @Override
+    @Transactional
+    public void deleteMasterUseCase(Kind kind, String id) {
+
+        boolean deleted = switch (kind) {
+            case MAP_TYPE -> Boolean.TRUE.equals(adminMemberMasterReadPort.deleteMapTypePort(Long.valueOf(id)));
+            case EXCHANGE_STAR_POINT_PRODUCT -> Boolean.TRUE.equals(adminMemberMasterReadPort.deleteExchangeStarPointProductPort(id));
+        };
+
+        if (!deleted) throw new NotExistsMasterException();
+
+        AdminAuditLog.write("master deleted kind={} id={}", kind, id);
     }
 }

@@ -11,5 +11,8 @@ public interface MongTypeRepository extends JpaRepository<MongTypeEntity, String
 
     Optional<MongTypeEntity> findByComnCode(String mongCode);
 
+    /** 이 레포지토리의 ID 타입은 String(코드)이라 PK 로는 findById 를 쓸 수 없다 */
+    Optional<MongTypeEntity> findByMongTypeId(Long mongTypeId);
+
     List<MongTypeEntity> findByLevel(Integer level);
 }

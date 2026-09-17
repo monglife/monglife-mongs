@@ -5,6 +5,7 @@ import com.monglife.core.enums.response.GlobalResponse;
 import com.monglife.core.exception.ErrorException;
 import com.monglife.mongs.adapter.in.admin.user.web.controller.AdminHealthController;
 import com.monglife.mongs.application.member.port.exception.AlreadyExistsMasterCodeException;
+import com.monglife.mongs.application.member.port.exception.NotExistsMasterException;
 import com.monglife.mongs.application.member.port.exception.NotExistsNoticeException;
 import com.monglife.mongs.application.member.port.exception.NotExistsOrderException;
 import com.monglife.mongs.application.member.port.exception.NotExistsPlayerException;
@@ -31,7 +32,7 @@ import java.util.Set;
 @RestControllerAdvice(basePackageClasses = AdminHealthController.class)
 public class AdminUserExceptionHandler {
 
-    @ExceptionHandler({ NotExistsNoticeException.class, NotExistsPlayerException.class, NotExistsOrderException.class })
+    @ExceptionHandler({ NotExistsNoticeException.class, NotExistsPlayerException.class, NotExistsOrderException.class, NotExistsMasterException.class })
     public ResponseEntity<ResponseDto<Map<String, Object>>> handleNotFound(ErrorException e) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND.value())
