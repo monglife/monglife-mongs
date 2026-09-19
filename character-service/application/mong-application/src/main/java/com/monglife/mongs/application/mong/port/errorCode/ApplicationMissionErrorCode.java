@@ -16,6 +16,7 @@ public enum ApplicationMissionErrorCode implements ErrorCode {
     ALREADY_EXISTS_MISSION_CODE("400-102-002", "이미 등록된 미션 코드입니다."),
     DUPLICATED_MISSION_GOAL("400-102-003", "같은 액션·목표 타입이 다른 주기에 이미 등록되어 있습니다."),
     MISSION_IN_USE("400-102-004", "사용자가 진행 중인 미션은 삭제할 수 없습니다."),
+    MISSION_PUBLISHED("400-102-005", "게시 중인 미션은 수정·삭제할 수 없습니다. 노출을 내리거나 다음 주기를 기다리세요."),
     ;
 
     private final String code;

@@ -3,7 +3,6 @@ package com.monglife.mongs.adapter.in.admin.character.web.dto.request;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.monglife.mongs.domain.mong.enums.MongStateCode;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +15,4 @@ public class AdminMongStateRequestDto {
 
     @NotNull
     private MongStateCode stateCode;
-
-    @Size(max = 500)
-    private String reason;
 }

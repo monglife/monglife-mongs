@@ -2,7 +2,6 @@ package com.monglife.mongs.adapter.in.admin.character.web.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +22,4 @@ public class AdminMongStatusRequestDto {
     @Min(0) private Integer payPoint;
     @Min(0) private Integer poopCount;
     @Min(0) private Integer randomDrawTicketCount;
-
-    @Size(max = 500)
-    private String reason;
 }

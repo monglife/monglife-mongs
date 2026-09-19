@@ -3,8 +3,11 @@ package com.monglife.mongs.domain.mission.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
+import java.time.temporal.TemporalAdjusters;
 
 @Getter
 @AllArgsConstructor
@@ -41,4 +44,53 @@ public enum MissionCycleCode {
             case DAILY -> String.format("%d%02d%02d", date.getYear(), date.getMonthValue(), date.getDayOfMonth());
         };
     }
+
+    /**
+     * 주기 시작일 (그 주기의 첫날).
+     *
+     * <p>주간은 ISO-8601 을 따라 월요일이다. cycleKey 와 같은 경계를 써야 한다 -
+     * 한쪽만 일요일 시작이 되면 게시 기간 표시와 실제 초기화 시점이 어긋난다.
+     */
+    public LocalDate periodStart(LocalDate date) {
+
+        return switch (this) {
+            case DAILY -> date;
+            case WEEKLY -> date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            case MONTHLY -> date.withDayOfMonth(1);
+        };
+    }
+
+    /** 주기 종료일 (다음 주기 첫날 - 1일). 화면에 "9/21 ~ 9/27" 처럼 닫힌 구간으로 보여 주려고 쓴다 */
+    public LocalDate periodEnd(LocalDate date) {
+
+        LocalDate start = this.periodStart(date);
+
+        return switch (this) {
+            case DAILY -> start;
+            case WEEKLY -> start.plusWeeks(1).minusDays(1);
+            case MONTHLY -> start.plusMonths(1).minusDays(1);
+        };
+    }
+
+    /**
+     * 주기 일련번호. 로테이션 그룹을 고르는 데 쓴다.
+     *
+     * <p>끊기지 않고 1씩 오르는 값이어야 한다. {@code WEEK_OF_WEEK_BASED_YEAR} 로 만들면
+     * 52주인 해와 53주인 해가 섞여 경계에서 그룹이 하나 건너뛴다. 그래서 주간은
+     * 기준 월요일(1970-01-05)로부터의 주 수를 센다.
+     *
+     * @param date 기준 날짜 (서비스 기준 시간대의 날짜)
+     * @return 0 이상 단조 증가하는 주기 번호
+     */
+    public long periodIndex(LocalDate date) {
+
+        return switch (this) {
+            case DAILY -> date.toEpochDay();
+            case WEEKLY -> ChronoUnit.WEEKS.between(EPOCH_MONDAY, this.periodStart(date));
+            case MONTHLY -> (long) date.getYear() * 12 + date.getMonthValue() - 1;
+        };
+    }
+
+    /** 1970-01-05 는 월요일이다. 주 단위 일련번호의 기준점 */
+    private static final LocalDate EPOCH_MONDAY = LocalDate.of(1970, 1, 5);
 }

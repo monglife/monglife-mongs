@@ -1,4 +1,4 @@
-package com.monglife.mongs.adapter.in.admin.user.web.dto.request;
+package com.monglife.mongs.adapter.in.admin.character.web.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotNull;
@@ -10,9 +10,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AdminStarPointRequestDto {
+public class AdminMissionActiveRequestDto {
 
-    /** 가감할 스타 포인트. 음수면 차감 */
     @NotNull
-    private Integer delta;
+    private Boolean isActive;
 }

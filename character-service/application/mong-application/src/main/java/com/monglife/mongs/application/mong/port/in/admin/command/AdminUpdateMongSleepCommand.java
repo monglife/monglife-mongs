@@ -11,12 +11,9 @@ public class AdminUpdateMongSleepCommand {
     /** true 면 수면, false 면 기상 */
     private final Boolean isSleep;
 
-    private final String reason;
-
     @Builder
-    public AdminUpdateMongSleepCommand(Long mongId, Boolean isSleep, String reason) {
+    public AdminUpdateMongSleepCommand(Long mongId, Boolean isSleep) {
         this.mongId = mongId;
         this.isSleep = isSleep;
-        this.reason = reason;
     }
 }

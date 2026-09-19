@@ -1,8 +1,5 @@
 package com.monglife.mongs.adapter.in.admin.character.web.dto.request;
 
-import com.monglife.mongs.domain.mission.enums.MissionActionCode;
-import com.monglife.mongs.domain.mission.enums.MissionCycleCode;
-import com.monglife.mongs.domain.mission.enums.MissionGoalTypeCode;
 import com.monglife.mongs.domain.mission.enums.MissionRewardTypeCode;
 import com.monglife.mongs.domain.mong.enums.InventoryTypeCode;
 import jakarta.validation.Valid;
@@ -18,28 +15,18 @@ import lombok.Setter;
 import java.util.List;
 
 /**
- * 미션 등록.
+ * 미션 수정.
  *
- * <p>겹침 방지 규칙이 있다 - 같은 {@code (actionCode, goalTypeCode)} 는 한 주기에서만 쓸 수 있다.
- * 같은 주기 안에서 {@code goalCount} 만 다른 미션을 여러 개 두는 것은 정상이다(일간 후보를 늘리는 방법).
+ * <p>{@code missionCode}·{@code cycleCode}·{@code actionCode}·{@code goalTypeCode} 는 받지 않는다.
+ * 정체성이라 바꾸면 이미 적재된 사용자 미션의 진행도가 다른 의미의 숫자가 된다.
+ * 그런 변경이 필요하면 새 미션을 등록하고 옛 미션을 비활성으로 내린다.
+ *
+ * <p>{@code rewards} 는 부분 수정이 아니라 통째 교체다. 빈 목록은 받지 않는다.
  */
 @Getter
 @Setter
 @NoArgsConstructor
-public class AdminMissionCreateRequestDto {
-
-    @NotBlank
-    @Size(max = 32)
-    private String missionCode;
-
-    @NotNull
-    private MissionCycleCode cycleCode;
-
-    @NotNull
-    private MissionActionCode actionCode;
-
-    @NotNull
-    private MissionGoalTypeCode goalTypeCode;
+public class AdminMissionUpdateRequestDto {
 
     @NotBlank
     @Size(max = 64)
@@ -48,6 +35,7 @@ public class AdminMissionCreateRequestDto {
     @Size(max = 128)
     private String description;
 
+    /** 유니크 키 uk_mission_goal 에 걸리므로 다른 미션과 겹치면 400-102-003 이다 */
     @NotNull
     @Min(1)
     private Integer goalCount;

@@ -20,6 +20,8 @@ public enum AdapterInAdminCharacterWebResponse implements Response {
     GET_TASKS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-016", "몽 스케줄 목록 조회에 성공했습니다."),
     PAUSE_TASK(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-017", "몽 스케줄 일시 중지에 성공했습니다."),
     RESUME_TASK(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-018", "몽 스케줄 재시작에 성공했습니다."),
+    DELETE_TASK(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-057", "몽 스케줄 삭제에 성공했습니다."),
+    CREATE_TASK(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-058", "몽 스케줄 등록에 성공했습니다."),
     GET_EVOLUTION_HISTORIES(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-019", "몽 진화 이력 조회에 성공했습니다."),
     GET_INVENTORIES(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-020", "인벤토리 목록 조회에 성공했습니다."),
 
@@ -46,6 +48,9 @@ public enum AdapterInAdminCharacterWebResponse implements Response {
     CREATE_MISSION(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-051", "미션 등록에 성공했습니다."),
     DELETE_MISSION(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-052", "미션 삭제에 성공했습니다."),
     GET_ACCOUNT_MISSIONS(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-053", "사용자 미션 진행 현황 조회에 성공했습니다."),
+    UPDATE_MISSION_ACTIVE(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-054", "미션 노출 여부 변경에 성공했습니다."),
+    GET_MISSION(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-055", "미션 조회에 성공했습니다."),
+    UPDATE_MISSION(HttpStatus.OK.value(), "MONGS-CHARACTER-ADMIN-056", "미션 수정에 성공했습니다."),
     ;
 
     private final Integer httpStatus;

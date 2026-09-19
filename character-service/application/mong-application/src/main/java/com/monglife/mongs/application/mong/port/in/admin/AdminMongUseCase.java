@@ -5,6 +5,7 @@ import com.monglife.mongs.application.mong.port.in.admin.command.AdminGetMongsCo
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongSleepCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStateCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStatusCommand;
+import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
 import com.monglife.mongs.application.mong.port.in.admin.vo.AdminTaskVo;
 import com.monglife.mongs.common.admin.vo.AdminPageVo;
 import com.monglife.mongs.domain.mong.enums.InventoryTypeCode;
@@ -40,6 +41,17 @@ public interface AdminMongUseCase {
     AdminTaskVo pauseTaskUseCase(Long taskId);
 
     AdminTaskVo resumeTaskUseCase(Long taskId);
+
+    /** 스케줄 삭제. 일시중지와 달리 행까지 지운다 */
+    AdminTaskVo deleteTaskUseCase(Long taskId);
+
+    /**
+     * 스케줄 등록.
+     *
+     * <p>수면·기상은 몽에 저장된 시각을 쓴다 - 관리자가 시각을 따로 넣게 하면 몽의
+     * sleepAt/wakeupAt 과 어긋나 기상 스케줄이 몽 설정과 다른 시각에 도는 상태가 생긴다.
+     */
+    AdminTaskVo createTaskUseCase(Long mongId, MongSchedulerType schedulerType);
 
     List<MongEvolutionHistory> getEvolutionHistoriesUseCase(Long accountId);
 

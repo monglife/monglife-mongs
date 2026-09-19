@@ -38,10 +38,13 @@ public class AdminCreateMissionCommand {
 
     private final Integer sortOrder;
 
+    /** 로테이션 그룹. 주간·월간만 의미가 있다 */
+    private final Integer rotationGroup;
+
     private final List<MissionReward> rewards;
 
     @Builder
-    public AdminCreateMissionCommand(String missionCode, MissionCycleCode cycleCode, MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, String title, String description, Integer goalCount, Boolean isActive, Integer sortOrder, List<MissionReward> rewards) {
+    public AdminCreateMissionCommand(String missionCode, MissionCycleCode cycleCode, MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, String title, String description, Integer goalCount, Boolean isActive, Integer sortOrder, Integer rotationGroup, List<MissionReward> rewards) {
         this.missionCode = missionCode;
         this.cycleCode = cycleCode;
         this.actionCode = actionCode;
@@ -51,6 +54,7 @@ public class AdminCreateMissionCommand {
         this.goalCount = goalCount;
         this.isActive = isActive;
         this.sortOrder = sortOrder;
+        this.rotationGroup = rotationGroup == null ? 0 : rotationGroup;
         this.rewards = rewards == null ? Collections.emptyList() : rewards;
     }
 }

@@ -45,4 +45,13 @@ public interface MissionRepository extends JpaRepository<MissionEntity, Long> {
      * 같은 주기 안에서 난이도 단계를 여러 개 두는 것은 막지 않는다.
      */
     boolean existsByActionCodeAndGoalTypeCodeAndCycleCodeNot(MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, MissionCycleCode cycleCode);
+
+    /**
+     * 목표치까지 같은 미션이 자기 말고 또 있는지.
+     *
+     * <p>수정에서 goalCount 를 바꿀 때 쓴다. 유니크 키 uk_mission_goal 이
+     * (액션, 목표 타입, 목표치) 라 DB 가 던지기 전에 먼저 잡아 준다.
+     */
+    boolean existsByActionCodeAndGoalTypeCodeAndGoalCountAndMissionIdNot(
+            MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount, Long missionId);
 }

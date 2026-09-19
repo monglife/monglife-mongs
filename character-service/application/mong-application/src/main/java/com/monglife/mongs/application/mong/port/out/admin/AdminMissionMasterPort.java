@@ -1,10 +1,13 @@
 package com.monglife.mongs.application.mong.port.out.admin;
 
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminCreateMissionCommand;
+import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMissionCommand;
 import com.monglife.mongs.domain.mission.enums.MissionActionCode;
 import com.monglife.mongs.domain.mission.enums.MissionCycleCode;
 import com.monglife.mongs.domain.mission.enums.MissionGoalTypeCode;
 import com.monglife.mongs.domain.mission.model.Mission;
+
+import java.util.Optional;
 
 public interface AdminMissionMasterPort {
 
@@ -19,6 +22,18 @@ public interface AdminMissionMasterPort {
     Boolean isExistsGoalInOtherCyclePort(MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, MissionCycleCode cycleCode);
 
     Mission createMissionPort(AdminCreateMissionCommand command);
+
+    /** 미션 단건. 수정 전 현재 값을 보려고 쓴다 */
+    Optional<Mission> getMissionPort(Long missionId);
+
+    /** 목표치까지 같은 미션이 자기 말고 또 있는지 (uk_mission_goal 사전 검사) */
+    Boolean isExistsGoalPort(MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount, Long excludeMissionId);
+
+    /** 수정 가능한 값과 리워드를 바꾼다. 리워드는 통째 교체다 */
+    Optional<Mission> updateMissionPort(AdminUpdateMissionCommand command);
+
+    /** 노출 여부만 바꾼다. 없으면 빈 Optional */
+    Optional<Mission> updateMissionActivePort(Long missionId, Boolean isActive);
 
     /** 미션과 그 리워드를 함께 지운다. 진행 중인 사용자 미션이 있으면 지우지 않는다 */
     Boolean deleteMissionPort(Long missionId);
