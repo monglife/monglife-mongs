@@ -9,6 +9,7 @@ import lombok.Getter;
 public enum ApplicationMongAdminErrorCode implements ErrorCode {
 
     NOT_EXISTS_TASK("400-101-100", "몽 스케줄이 존재하지 않습니다."),
+    ALREADY_EXISTS_TASK("400-101-101", "같은 타입의 스케줄이 이미 등록되어 있습니다. 지운 뒤 다시 등록하세요."),
     ALREADY_EXISTS_MASTER_CODE("400-101-101", "이미 등록된 코드입니다."),
     NOT_EXISTS_MASTER_CODE("400-101-102", "등록되지 않은 공통 코드입니다."),
     NOT_EXISTS_MASTER("400-101-104", "마스터 데이터가 존재하지 않습니다."),

@@ -80,11 +80,15 @@ public class MissionEntity extends BaseTimeEntity {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
+    /** 로테이션 그룹. 주간·월간이 주기마다 한 그룹씩 돌아가며 나간다. 일간은 쓰지 않는다 */
+    @Column(name = "rotation_group", nullable = false)
+    private Integer rotationGroup;
+
     @OneToMany(mappedBy = "mission", fetch = FetchType.LAZY)
     private List<MissionRewardEntity> rewards = new ArrayList<>();
 
     @Builder
-    public MissionEntity(Long missionId, String missionCode, MissionCycleCode cycleCode, MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, String title, String description, Integer goalCount, Boolean isActive, Integer sortOrder) {
+    public MissionEntity(Long missionId, String missionCode, MissionCycleCode cycleCode, MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, String title, String description, Integer goalCount, Boolean isActive, Integer sortOrder, Integer rotationGroup) {
         this.missionId = missionId;
         this.missionCode = missionCode;
         this.cycleCode = cycleCode;
@@ -95,6 +99,7 @@ public class MissionEntity extends BaseTimeEntity {
         this.goalCount = goalCount;
         this.isActive = isActive;
         this.sortOrder = sortOrder;
+        this.rotationGroup = rotationGroup == null ? 0 : rotationGroup;
     }
 
     /**
@@ -106,6 +111,36 @@ public class MissionEntity extends BaseTimeEntity {
      */
     public void addReward(MissionRewardEntity reward) {
         this.rewards.add(reward);
+    }
+
+    /**
+     * 노출 여부 변경.
+     *
+     * <p>이미 적재된 사용자 미션은 건드리지 않는다. 다음 주기부터 선정에서 빠질 뿐이다 -
+     * 진행 중이던 사용자는 그 주기가 끝날 때까지 그대로 보고 수령도 할 수 있다.
+     */
+    public void updateActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    /**
+     * 수정 가능한 값만 바꾼다.
+     *
+     * <p>missionCode·cycleCode·actionCode·goalTypeCode 는 정체성이라 세터를 두지 않는다 -
+     * 바꾸면 이미 적재된 사용자 미션의 진행도가 다른 의미의 숫자가 된다.
+     */
+    public void update(String title, String description, Integer goalCount, Boolean isActive, Integer sortOrder, Integer rotationGroup) {
+        this.title = title;
+        this.description = description;
+        this.goalCount = goalCount;
+        this.isActive = isActive;
+        this.sortOrder = sortOrder;
+        this.rotationGroup = rotationGroup == null ? 0 : rotationGroup;
+    }
+
+    /** 리워드 통째 교체를 위한 초기화. 지우는 쪽은 레포지토리가 맡는다 */
+    public void clearRewards() {
+        this.rewards.clear();
     }
 
     public Mission toDomain() {
@@ -120,6 +155,7 @@ public class MissionEntity extends BaseTimeEntity {
                 .goalCount(this.goalCount)
                 .isActive(this.isActive)
                 .sortOrder(this.sortOrder)
+                .rotationGroup(this.rotationGroup)
                 .rewards(this.rewards.stream().map(MissionRewardEntity::toDomain).toList())
                 .build();
     }

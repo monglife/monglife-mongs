@@ -69,8 +69,8 @@ public class AdminMemberService implements AdminMemberUseCase {
         memberPersistencePort.savePlayerPort(player)
                 .orElseThrow(NotExistsPlayerException::new);
 
-        AdminAuditLog.write("star point adjusted accountId={} before={} delta={} after={} reason={}",
-                player.getAccountId(), before, command.getDelta(), player.getStarPoint(), command.getReason());
+        AdminAuditLog.write("star point adjusted accountId={} before={} delta={} after={}",
+                player.getAccountId(), before, command.getDelta(), player.getStarPoint());
 
         // 스타 포인트 비동기 응답
         memberPublishPort.publishStarPointPort(player);

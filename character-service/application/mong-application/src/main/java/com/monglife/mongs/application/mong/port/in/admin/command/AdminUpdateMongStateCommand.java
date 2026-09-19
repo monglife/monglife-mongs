@@ -11,12 +11,9 @@ public class AdminUpdateMongStateCommand {
 
     private final MongStateCode stateCode;
 
-    private final String reason;
-
     @Builder
-    public AdminUpdateMongStateCommand(Long mongId, MongStateCode stateCode, String reason) {
+    public AdminUpdateMongStateCommand(Long mongId, MongStateCode stateCode) {
         this.mongId = mongId;
         this.stateCode = stateCode;
-        this.reason = reason;
     }
 }

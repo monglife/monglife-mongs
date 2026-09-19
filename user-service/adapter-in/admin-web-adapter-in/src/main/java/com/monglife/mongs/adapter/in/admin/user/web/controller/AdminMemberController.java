@@ -66,7 +66,6 @@ public class AdminMemberController {
         AdminAdjustStarPointCommand command = AdminAdjustStarPointCommand.builder()
                 .accountId(accountId)
                 .delta(requestDto.getDelta())
-                .reason(requestDto.getReason())
                 .build();
 
         return ResponseEntity.ok(AdapterInAdminUserWebResponse.ADJUST_STAR_POINT.toResponseDto(AdminMemberResponseDto.of(adminMemberUseCase.adjustStarPointUseCase(command))));

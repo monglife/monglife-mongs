@@ -26,10 +26,8 @@ public class AdminUpdateMongStatusCommand {
 
     private final Integer randomDrawTicketCount;
 
-    private final String reason;
-
     @Builder
-    public AdminUpdateMongStatusCommand(Long mongId, Double weight, Double strength, Double satiety, Double healthy, Double fatigue, Double exp, Integer payPoint, Integer poopCount, Integer randomDrawTicketCount, String reason) {
+    public AdminUpdateMongStatusCommand(Long mongId, Double weight, Double strength, Double satiety, Double healthy, Double fatigue, Double exp, Integer payPoint, Integer poopCount, Integer randomDrawTicketCount) {
         this.mongId = mongId;
         this.weight = weight;
         this.strength = strength;
@@ -40,6 +38,5 @@ public class AdminUpdateMongStatusCommand {
         this.payPoint = payPoint;
         this.poopCount = poopCount;
         this.randomDrawTicketCount = randomDrawTicketCount;
-        this.reason = reason;
     }
 }

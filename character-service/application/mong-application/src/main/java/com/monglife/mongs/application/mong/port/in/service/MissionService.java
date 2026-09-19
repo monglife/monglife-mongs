@@ -18,6 +18,7 @@ import com.monglife.mongs.domain.mission.enums.MissionActionCode;
 import com.monglife.mongs.domain.mission.enums.MissionCycleCode;
 import com.monglife.mongs.domain.mission.model.AccountMission;
 import com.monglife.mongs.domain.mission.model.Mission;
+import com.monglife.mongs.domain.mission.model.MissionRotation;
 import com.monglife.mongs.domain.mission.model.MissionReward;
 import com.monglife.mongs.domain.mong.model.Mong;
 import org.springframework.beans.factory.annotation.Value;
@@ -210,7 +211,7 @@ public class MissionService implements MissionUseCase {
                 continue;
             }
 
-            for (Mission mission : this.selectMissions(cycleCode)) {
+            for (Mission mission : this.selectMissions(cycleCode, today)) {
                 createAccountMissionVos.add(CreateAccountMissionVo.builder()
                         .accountId(accountId)
                         .missionId(mission.getMissionId())
@@ -232,19 +233,20 @@ public class MissionService implements MissionUseCase {
     /**
      * 주기별 노출 미션 선정.
      *
-     * <p>주간·월간은 활성 미션 전부다(모든 사용자가 같다). 일간만 사용자별로 뽑는다.
+     * <p>주간·월간은 로테이션 그룹으로 고른다 - 주기 번호로 그룹 하나를 골라 그 그룹 전부를 내보낸다.
+     * 모든 사용자가 같은 묶음을 본다. 일간만 사용자별로 무작위다.
      * 뽑을 때 액션이 겹치지 않게 한다 - "밥 3번"과 "밥 10번"이 같은 날 함께 나오면
      * 다섯 칸 중 둘이 사실상 같은 미션이 된다.
      *
      * @param cycleCode 미션 주기
      * @return 적재할 미션 마스터 목록
      */
-    private List<Mission> selectMissions(MissionCycleCode cycleCode) {
+    private List<Mission> selectMissions(MissionCycleCode cycleCode, LocalDate today) {
 
         List<Mission> activeMissions = missionReadPort.getActiveMissionsPort(cycleCode);
 
         if (!MissionCycleCode.DAILY.equals(cycleCode)) {
-            return activeMissions;
+            return MissionRotation.select(activeMissions, cycleCode, today);
         }
 
         Map<MissionActionCode, List<Mission>> missionsByAction = new EnumMap<>(MissionActionCode.class);

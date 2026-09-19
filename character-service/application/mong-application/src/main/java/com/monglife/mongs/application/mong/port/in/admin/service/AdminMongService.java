@@ -7,6 +7,7 @@ import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
 import com.monglife.mongs.application.mong.port.exception.InvalidCreateInventoryItemException;
 import com.monglife.mongs.application.mong.port.exception.InvalidCreateMongScheduleException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
+import com.monglife.mongs.application.mong.port.exception.AlreadyExistsTaskException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsTaskException;
 import com.monglife.mongs.application.mong.port.in.ManagementUseCase;
 import com.monglife.mongs.application.mong.port.in.admin.AdminMongUseCase;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -93,8 +95,8 @@ public class AdminMongService implements AdminMongUseCase {
             }
         }
 
-        AdminAuditLog.write("mong status updated mongId={} accountId={} reason={} mong={}",
-                mong.getMongId(), mong.getAccountId(), command.getReason(), mong);
+        AdminAuditLog.write("mong status updated mongId={} accountId={} mong={}",
+                mong.getMongId(), mong.getAccountId(), mong);
 
         return mong;
     }
@@ -128,8 +130,8 @@ public class AdminMongService implements AdminMongUseCase {
             this.restoreTasks(mong);
         }
 
-        AdminAuditLog.write("mong state updated mongId={} accountId={} before={} after={} reason={}",
-                mong.getMongId(), mong.getAccountId(), before, after, command.getReason());
+        AdminAuditLog.write("mong state updated mongId={} accountId={} before={} after={}",
+                mong.getMongId(), mong.getAccountId(), before, after);
 
         return mong;
     }
@@ -172,8 +174,8 @@ public class AdminMongService implements AdminMongUseCase {
         Mong mong = mongReadPort.getMongPort(command.getMongId())
                 .orElseThrow(NotExistsMongException::new);
 
-        AdminAuditLog.write("mong sleep changed mongId={} accountId={} isSleep={} reason={}",
-                mong.getMongId(), mong.getAccountId(), command.getIsSleep(), command.getReason());
+        AdminAuditLog.write("mong sleep changed mongId={} accountId={} isSleep={}",
+                mong.getMongId(), mong.getAccountId(), command.getIsSleep());
 
         if (Boolean.TRUE.equals(command.getIsSleep())) {
             return managementUseCase.sleepMongUseCase(SleepMongCommand.builder()
@@ -224,6 +226,48 @@ public class AdminMongService implements AdminMongUseCase {
         AdminAuditLog.write("task resumed taskId={}", taskId);
         return adminMongSchedulerPort.resumeTaskPort(taskId)
                 .orElseThrow(NotExistsTaskException::new);
+    }
+
+    @Override
+    @Transactional
+    public AdminTaskVo deleteTaskUseCase(Long taskId) {
+        AdminTaskVo deleted = adminMongSchedulerPort.deleteTaskPort(taskId)
+                .orElseThrow(NotExistsTaskException::new);
+        AdminAuditLog.write("task deleted taskId={} mongId={} type={}",
+                taskId, deleted.getMongId(), deleted.getSchedulerTypeCode());
+        return deleted;
+    }
+
+    /**
+     * 스케줄 등록.
+     *
+     * <p>같은 타입이 이미 있으면 막는다. 등록 경로가 기존 행을 재사용하는데, 그 행이
+     * 일시중지 상태면 {@code expiredAt} 이 null 이라 타이머를 걸다 NPE 로 트랜잭션이 통째로 깨진다.
+     */
+    @Override
+    @Transactional
+    public AdminTaskVo createTaskUseCase(Long mongId, MongSchedulerType schedulerType) {
+
+        Mong mong = mongReadPort.getMongPort(mongId).orElseThrow(NotExistsMongException::new);
+
+        if (Boolean.TRUE.equals(adminMongSchedulerPort.isExistsTaskPort(mongId, schedulerType))) {
+            throw new AlreadyExistsTaskException();
+        }
+
+        // 수면·기상은 몽에 저장된 시각을 쓴다. 관리자가 따로 넣게 하면 몽 설정과 어긋난다.
+        LocalTime fixTime = switch (schedulerType) {
+            case SLEEP -> mong.getSleepAt();
+            case WAKEUP -> mong.getWakeupAt();
+            default -> null;
+        };
+
+        AdminTaskVo created = adminMongSchedulerPort.createTaskPort(mongId, mong.getAccountId(), schedulerType, fixTime)
+                .orElseThrow(InvalidCreateMongScheduleException::new);
+
+        AdminAuditLog.write("task created taskId={} mongId={} type={} fixTime={}",
+                created.getTaskId(), mongId, schedulerType, fixTime);
+
+        return created;
     }
 
     @Override

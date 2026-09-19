@@ -7,16 +7,18 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum MongSchedulerType implements SchedulerType {
 
-    EGG_EVOLUTION("EGG-EVOLUTION", 300L),
-    SLEEP("SLEEP", 86400L),
-    WAKEUP("WAKEUP", 86400L),
-    INCREASE_STATUS("INCREASE-STATUS", 900L),
-    DECREASE_STATUS("DECREASE-STATUS", 900L),
-    INCREASE_POOP("INCREASE-POOP", 3600L),
-    DEAD("DEAD", 43200L),
+    EGG_EVOLUTION("EGG-EVOLUTION", 300L, ScheduleKind.ONCE),
+    SLEEP("SLEEP", 86400L, ScheduleKind.FIXED_TIME_CYCLE),
+    WAKEUP("WAKEUP", 86400L, ScheduleKind.FIXED_TIME_CYCLE),
+    INCREASE_STATUS("INCREASE-STATUS", 900L, ScheduleKind.CYCLE),
+    DECREASE_STATUS("DECREASE-STATUS", 900L, ScheduleKind.CYCLE),
+    INCREASE_POOP("INCREASE-POOP", 3600L, ScheduleKind.CYCLE),
+    DEAD("DEAD", 43200L, ScheduleKind.ONCE),
     ;
 
     private final String code;
 
     private final Long expiration;
+
+    private final ScheduleKind kind;
 }

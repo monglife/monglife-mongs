@@ -34,4 +34,10 @@ public enum TestSchedulerType implements SchedulerType {
     public Long getExpiration() {
         return this.expiration;
     }
+
+    /** 테스트는 전부 시간 반복으로 본다. 이 열거형을 쓰는 곳이 관리자 등록 경로가 아니다 */
+    @Override
+    public ScheduleKind getKind() {
+        return ScheduleKind.CYCLE;
+    }
 }

@@ -10,12 +10,9 @@ public class AdminAdjustStarPointCommand {
 
     private final Integer delta;
 
-    private final String reason;
-
     @Builder
-    public AdminAdjustStarPointCommand(Long accountId, Integer delta, String reason) {
+    public AdminAdjustStarPointCommand(Long accountId, Integer delta) {
         this.accountId = accountId;
         this.delta = delta;
-        this.reason = reason;
     }
 }

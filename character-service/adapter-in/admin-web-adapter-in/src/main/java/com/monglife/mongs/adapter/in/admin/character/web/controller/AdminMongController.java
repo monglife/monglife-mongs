@@ -8,6 +8,7 @@ import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminInvent
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongSleepRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongStateRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongStatusRequestDto;
+import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminTaskCreateRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.response.*;
 import com.monglife.mongs.adapter.in.admin.character.web.enums.AdapterInAdminCharacterWebResponse;
 import com.monglife.mongs.adapter.in.admin.character.web.util.AdminPage;
@@ -84,7 +85,6 @@ public class AdminMongController {
                 .payPoint(requestDto.getPayPoint())
                 .poopCount(requestDto.getPoopCount())
                 .randomDrawTicketCount(requestDto.getRandomDrawTicketCount())
-                .reason(requestDto.getReason())
                 .build();
 
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.UPDATE_MONG_STATUS.toResponseDto(AdminMongResponseDto.of(adminMongUseCase.updateMongStatusUseCase(command))));
@@ -100,7 +100,6 @@ public class AdminMongController {
         AdminUpdateMongSleepCommand command = AdminUpdateMongSleepCommand.builder()
                 .mongId(mongId)
                 .isSleep(requestDto.getIsSleep())
-                .reason(requestDto.getReason())
                 .build();
 
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.UPDATE_MONG_SLEEP.toResponseDto(AdminMongResponseDto.of(adminMongUseCase.updateMongSleepUseCase(command))));
@@ -115,7 +114,6 @@ public class AdminMongController {
         AdminUpdateMongStateCommand command = AdminUpdateMongStateCommand.builder()
                 .mongId(mongId)
                 .stateCode(requestDto.getStateCode())
-                .reason(requestDto.getReason())
                 .build();
 
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.UPDATE_MONG_STATE.toResponseDto(AdminMongResponseDto.of(adminMongUseCase.updateMongStateUseCase(command))));
@@ -144,6 +142,23 @@ public class AdminMongController {
     @PostMapping("/tasks/{taskId}/resume")
     public ResponseEntity<ResponseDto<AdminTaskResponseDto>> resumeTask(@PathVariable Long taskId) {
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.RESUME_TASK.toResponseDto(AdminTaskResponseDto.of(adminMongUseCase.resumeTaskUseCase(taskId))));
+    }
+
+    @EntryLoggingPoint
+    @DeleteMapping("/tasks/{taskId}")
+    public ResponseEntity<ResponseDto<AdminTaskResponseDto>> deleteTask(@PathVariable Long taskId) {
+        return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.DELETE_TASK.toResponseDto(AdminTaskResponseDto.of(adminMongUseCase.deleteTaskUseCase(taskId))));
+    }
+
+    /** 스케줄 등록. 수면·기상 시각은 몽에 저장된 값을 쓰므로 따로 받지 않는다 */
+    @EntryLoggingPoint
+    @PostMapping("/{mongId}/tasks")
+    public ResponseEntity<ResponseDto<AdminTaskResponseDto>> createTask(
+            @PathVariable Long mongId,
+            @Valid @RequestBody AdminTaskCreateRequestDto requestDto
+    ) {
+        return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.CREATE_TASK
+                .toResponseDto(AdminTaskResponseDto.of(adminMongUseCase.createTaskUseCase(mongId, requestDto.getSchedulerTypeCode()))));
     }
 
     @EntryLoggingPoint
