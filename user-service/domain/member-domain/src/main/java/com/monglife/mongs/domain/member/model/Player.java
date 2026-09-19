@@ -77,4 +77,34 @@ public class Player {
         this.starPoint = this.starPoint + starPoint;
     }
 
+    /**
+     * 관리자 스타 포인트 가감. 음수 델타로 0 아래로 내려가면 예외.
+     * @param delta 가감할 스타 포인트 (음수 허용)
+     */
+    public void adjustStarPoint(Integer delta) {
+
+        if (this.starPoint + delta < 0) {
+            throw new NotEnoughStarPointException();
+        }
+
+        this.starPoint = this.starPoint + delta;
+    }
+
+    /**
+     * 관리자 슬롯 수 지정. 구매 절차(스타 포인트 차감) 없이 값만 바꾼다.
+     * @param slotCount 슬롯 수 (1 ~ 최대 슬롯 수)
+     */
+    public void updateSlotCount(Integer slotCount) {
+
+        if (slotCount > MAX_SLOT_COUNT) {
+            throw new AlreadyMaxSlotCountException();
+        }
+
+        this.slotCount = Math.max(1, slotCount);
+    }
+
+    public static Integer getMaxSlotCount() {
+        return MAX_SLOT_COUNT;
+    }
+
 }

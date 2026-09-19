@@ -1,6 +1,7 @@
 package com.monglife.mongs.adapter.out.device.cache.service;
 
 import com.monglife.mongs.application.device.port.out.DeviceCachePort;
+import com.monglife.mongs.application.device.port.out.admin.AdminDeviceCachePort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
-public class DeviceCacheService implements DeviceCachePort {
+public class DeviceCacheService implements DeviceCachePort, AdminDeviceCachePort {
 
     private static final String KEY_PREFIX = "step:exchange:";
 
@@ -78,6 +79,38 @@ public class DeviceCacheService implements DeviceCachePort {
             deviceRedisTemplate.opsForValue().decrement(key, walkingCount);
         } catch (Exception e) {
             log.error("일일 환전 상한 되돌리기 실패. key={}, walkingCount={}", key, walkingCount, e);
+        }
+    }
+
+    /**
+     * 오늘 누적 환전 걸음 수 조회 (관리자). 키가 없거나 Redis 가 죽었으면 0.
+     */
+    @Override
+    public int getTodayExchangedWalkingCountPort(Long accountId) {
+
+        String key = generateKey(accountId);
+
+        try {
+            String value = deviceRedisTemplate.opsForValue().get(key);
+            return value == null ? 0 : Integer.parseInt(value);
+        } catch (Exception e) {
+            log.error("일일 환전 상한 조회 실패. key={}", key, e);
+            return 0;
+        }
+    }
+
+    /**
+     * 오늘 누적 환전 걸음 수 초기화 (관리자). 키를 지우면 다음 환전 때 새로 만들어진다.
+     */
+    @Override
+    public void resetTodayExchangedWalkingCountPort(Long accountId) {
+
+        String key = generateKey(accountId);
+
+        try {
+            deviceRedisTemplate.delete(key);
+        } catch (Exception e) {
+            log.error("일일 환전 상한 초기화 실패. key={}", key, e);
         }
     }
 

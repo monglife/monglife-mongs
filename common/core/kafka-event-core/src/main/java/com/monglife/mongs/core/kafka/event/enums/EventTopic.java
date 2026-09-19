@@ -19,6 +19,7 @@ public class EventTopic {
     public static final String COMMIT_CREATE_MONG                               = COMMIT_PREFIX  + ".create-mong";                          // character -> user      (without rollback)
     public static final String COMMIT_EVOLUTION_MONG                            = COMMIT_PREFIX  + ".evolution-mong";                       // character -> user      (without rollback)
     public static final String COMMIT_RANDOM_DRAW_MAP                           = COMMIT_PREFIX  + ".random-draw-map";                      // character -> user      (without rollback)
+    public static final String COMMIT_MISSION_REWARD_STAR_POINT                 = COMMIT_PREFIX  + ".mission-reward-star-point";            // character -> user      (without rollback)
 
     public static final String ROLLBACK_EXCHANGE_CURRENT_WALKING_COUNT          = ROLLBACK_REFIX + ".exchange-current-walking-count";       // character -> user
     public static final String ROLLBACK_EXCHANGE_STAR_POINT                     = ROLLBACK_REFIX + ".exchange-star-point";                  // character -> user

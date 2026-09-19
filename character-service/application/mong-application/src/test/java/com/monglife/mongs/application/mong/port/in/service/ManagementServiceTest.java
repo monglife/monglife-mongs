@@ -3,6 +3,7 @@ package com.monglife.mongs.application.mong.port.in.service;
 import com.monglife.mongs.application.mong.port.exception.InvalidStrokeMongException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
 import com.monglife.mongs.application.mong.port.in.ManagementUseCase;
+import com.monglife.mongs.application.mong.port.in.MissionUseCase;
 import com.monglife.mongs.application.mong.port.in.command.*;
 import com.monglife.mongs.application.mong.port.in.utils.MongTestUtil;
 import com.monglife.mongs.application.mong.port.out.MongEventPort;
@@ -33,7 +34,8 @@ class ManagementServiceTest {
     private final MongPersistencePort mongPersistencePort = Mockito.mock(MongPersistencePort.class);
     private final MongReadPort mongReadPort = Mockito.mock(MongReadPort.class);
     private final MongEventPort mongEventPort = Mockito.mock(MongEventPort.class);
-    private final ManagementUseCase managementUseCase = new ManagementService(mongSchedulerPort, mongPersistencePort, mongReadPort, mongEventPort);
+    private final MissionUseCase missionUseCase = Mockito.mock(MissionUseCase.class);
+    private final ManagementUseCase managementUseCase = new ManagementService(mongSchedulerPort, mongPersistencePort, mongReadPort, mongEventPort, missionUseCase);
 
     @Nested
     @DisplayName("몽 생성 단위 테스트")

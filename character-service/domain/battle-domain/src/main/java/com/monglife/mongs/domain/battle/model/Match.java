@@ -71,6 +71,13 @@ public class Match {
     }
 
     /**
+     * 관리자 강제 종료. 멈춘 매치를 END 로 마감한다. 보상·정산은 하지 않는다.
+     */
+    public void adminEnd() {
+        this.end();
+    }
+
+    /**
      * 라운드 변경
      */
     private void nextRound() {

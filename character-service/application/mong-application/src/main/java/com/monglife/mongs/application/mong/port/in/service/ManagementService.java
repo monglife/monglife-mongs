@@ -1,11 +1,14 @@
 package com.monglife.mongs.application.mong.port.in.service;
 
 import com.monglife.mongs.application.mong.port.annotation.CheckMongDead;
+import com.monglife.mongs.application.mong.port.annotation.MissionProgress;
 import com.monglife.mongs.application.mong.port.annotation.PublishMongPort;
 import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
 import com.monglife.mongs.application.mong.port.exception.*;
 import com.monglife.mongs.application.mong.port.in.ManagementUseCase;
+import com.monglife.mongs.application.mong.port.in.MissionUseCase;
 import com.monglife.mongs.application.mong.port.in.command.*;
+import com.monglife.mongs.domain.mission.enums.MissionActionCode;
 import com.monglife.mongs.application.mong.port.out.MongEventPort;
 import com.monglife.mongs.application.mong.port.out.MongPersistencePort;
 import com.monglife.mongs.application.mong.port.out.MongReadPort;
@@ -37,11 +40,14 @@ public class ManagementService implements ManagementUseCase {
 
     private final MongEventPort mongEventPort;
 
+    private final MissionUseCase missionUseCase;
+
     /**
      * 몽 생성
      */
     @Override
     @Transactional
+    @MissionProgress(MissionActionCode.CREATE_MONG)
     public Mong createMongUseCase(CreateMongCommand command) {
         // 0 레벨의 몽 타입 목록 조회
         List<MongType> mongTypes = mongReadPort.getMongTypesPort(0);
@@ -162,6 +168,7 @@ public class ManagementService implements ManagementUseCase {
     @Override
     @Transactional
     @PublishMongPort
+    @MissionProgress(MissionActionCode.STROKE)
     public Mong strokeMongUseCase(StrokeMongCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -176,8 +183,14 @@ public class ManagementService implements ManagementUseCase {
             throw new InvalidStrokeMongException(expirationSeconds);
         }
 
+        double expBeforeStroke = mong.getExp();
+
         // 몽 쓰다 듬기
         mong.stroke();
+
+        // 획득 경험치 누적 미션
+        this.accumulate(command.getAccountId(), MissionActionCode.EXP_EARN,
+                (int) Math.round(mong.getExp() - expBeforeStroke));
 
         // 몽 정보 동기화
         mongPersistencePort.saveMongPort(mong)
@@ -196,6 +209,7 @@ public class ManagementService implements ManagementUseCase {
     @Override
     @Transactional
     @PublishMongPort
+    @MissionProgress(MissionActionCode.SLEEP)
     public Mong sleepMongUseCase(SleepMongCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -224,6 +238,7 @@ public class ManagementService implements ManagementUseCase {
     @Override
     @Transactional
     @PublishMongPort
+    @MissionProgress(MissionActionCode.WAKEUP)
     public Mong wakeUpMongUseCase(WakeupMongCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -259,8 +274,16 @@ public class ManagementService implements ManagementUseCase {
                 .orElseThrow(NotExistsMongException::new)
                 .verify(command.getAccountId());
 
+        int poopCountBeforeClean = mong.getPoopCount();
+        double expBeforeClean = mong.getExp();
+
         // 몽 배변 처리
         mong.poopClean();
+
+        // 치운 배변 수가 곧 누적값이다. 같은 호출로 일간 COUNT 미션도 함께 오른다
+        this.accumulate(command.getAccountId(), MissionActionCode.POOP_CLEAN, poopCountBeforeClean);
+        this.accumulate(command.getAccountId(), MissionActionCode.EXP_EARN,
+                (int) Math.round(mong.getExp() - expBeforeClean));
 
         // 몽 정보 동기화
         mongPersistencePort.saveMongPort(mong)
@@ -295,6 +318,7 @@ public class ManagementService implements ManagementUseCase {
     @Override
     @Transactional
     @PublishMongPort
+    @MissionProgress(value = MissionActionCode.EVOLUTION, detailField = "mongCode")
     public Mong evolutionMongUseCase(EvolutionMongCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -339,6 +363,7 @@ public class ManagementService implements ManagementUseCase {
     @Override
     @Transactional
     @PublishMongPort
+    @MissionProgress(MissionActionCode.GRADUATE)
     public Mong graduateMongUseCase(GraduateMongCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -372,6 +397,9 @@ public class ManagementService implements ManagementUseCase {
 
         // 몽 페이 포인트 증가
         mong.increasePayPoint(command.getPayPoint());
+
+        // 획득 페이 포인트 누적 미션. 걸음 수·스타 포인트 환전이 모두 이 경로로 들어온다
+        this.accumulate(command.getAccountId(), MissionActionCode.PAY_POINT_EARN, command.getPayPoint());
 
         // 몽 정보 동기화
         mongPersistencePort.saveMongPort(mong)
@@ -446,5 +474,21 @@ public class ManagementService implements ManagementUseCase {
                 .orElseThrow(NotExistsMongException::new);
 
         return mong;
+    }
+
+    /**
+     * 누적 미션 반영. 0 이하면 부를 필요가 없다
+     */
+    private void accumulate(Long accountId, MissionActionCode actionCode, int amount) {
+
+        if (amount <= 0) {
+            return;
+        }
+
+        missionUseCase.increaseMissionProgressUseCase(IncreaseMissionProgressCommand.builder()
+                .accountId(accountId)
+                .actionCode(actionCode)
+                .amount(amount)
+                .build());
     }
 }

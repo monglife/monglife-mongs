@@ -31,6 +31,9 @@ public enum AdapterInMongWebResponse implements Response {
     POOP_CLEAN_MONG(HttpStatus.OK.value(), "MONGS-CHARACTER-MONG-017", "몽 배변처리에 성공했습니다."),
     EVOLUTION_MONG(HttpStatus.OK.value(), "MONGS-CHARACTER-MONG-018", "몽 진화에 성공했습니다."),
     GRADUATE_MONG(HttpStatus.OK.value(), "MONGS-CHARACTER-MONG-019", "몽 졸업에 성공했습니다."),
+
+    GET_MISSIONS(HttpStatus.OK.value(), "MONGS-CHARACTER-MONG-020", "미션 목록 조회에 성공했습니다."),
+    CLAIM_MISSION_REWARD(HttpStatus.OK.value(), "MONGS-CHARACTER-MONG-021", "미션 리워드 수령에 성공했습니다."),
     ;
 
     private final Integer httpStatus;

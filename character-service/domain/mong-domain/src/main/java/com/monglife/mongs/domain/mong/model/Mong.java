@@ -588,6 +588,22 @@ public class Mong {
     }
 
     /**
+     * 미션 리워드 경험치 지급
+     *
+     * <p>매치 보상과 같은 규칙이다 - maxStatus 로 자르고 상태 코드를 동기화한다.
+     * 동기화를 빼면 미션 경험치로 진화 조건을 넘겨도 EVOLUTION_READY 가 안 되어
+     * 클라이언트가 진화 버튼을 띄우지 못한다.
+     *
+     * @param exp 보상 경험치
+     */
+    public void missionReward(Double exp) {
+        this.exp = Math.max(0, Math.min(this.exp + exp, this.maxStatus));
+
+        // 몽 상태 코드 동기화
+        this.syncMongStateCode();
+    }
+
+    /**
      * 몽 상태 코드 동기화
      */
     private void syncMongStateCode() {
@@ -648,6 +664,50 @@ public class Mong {
             this.statusCode = statusCode;
             this.isMongStatusCodeChange = true;
         }
+    }
+
+    /**
+     * 관리자 지수 수정. null 인 항목은 건드리지 않고, 값은 0 ~ maxStatus 로 잘라 넣는다.
+     * DEAD 상태에서는 상태·지수 코드 동기화를 건너뛴다(동기화가 DEAD 를 거부한다).
+     */
+    public void adminUpdateStatus(Double weight, Double strength, Double satiety, Double healthy, Double fatigue, Double exp, Integer payPoint, Integer poopCount, Integer randomDrawTicketCount) {
+
+        if (weight   != null) this.weight   = Math.max(0, weight);
+        if (strength != null) this.strength = clampStatus(strength);
+        if (satiety  != null) this.satiety  = clampStatus(satiety);
+        if (healthy  != null) this.healthy  = clampStatus(healthy);
+        if (fatigue  != null) this.fatigue  = clampStatus(fatigue);
+        if (exp      != null) this.exp      = clampStatus(exp);
+        if (payPoint != null) this.payPoint = Math.max(0, payPoint);
+        if (poopCount != null) this.poopCount = Math.max(0, Math.min(poopCount, MAX_POOP_COUNT));
+        if (randomDrawTicketCount != null) this.randomDrawTicketCount = Math.max(0, randomDrawTicketCount);
+
+        if (!MongStateCode.DEAD.equals(this.stateCode)) {
+            // 몽 상태 코드 동기화
+            this.syncMongStateCode();
+            // 몽 지수 코드 동기화
+            this.syncMongStatusCode();
+        }
+    }
+
+    /**
+     * 관리자 상태 코드 강제 변경. DEAD 복구처럼 도메인 규칙을 우회해야 하는 운영 조치용.
+     * 지수 코드는 NORMAL 로 되돌린 뒤 현재 지수 기준으로 다시 맞춘다.
+     */
+    public void adminUpdateStateCode(MongStateCode stateCode) {
+
+        if (this.stateCode != stateCode) {
+            this.stateCode = stateCode;
+            this.isMongStateChange = true;
+        }
+
+        if (!MongStateCode.DEAD.equals(this.stateCode)) {
+            this.syncMongStatusCode();
+        }
+    }
+
+    private double clampStatus(double value) {
+        return Math.max(0, Math.min(value, this.maxStatus));
     }
 
     /**

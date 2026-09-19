@@ -3,6 +3,7 @@ package com.monglife.mongs.application.mong.port.in.service;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsTrainingTypeException;
 import com.monglife.mongs.application.mong.port.in.ActivityUseCase;
+import com.monglife.mongs.application.mong.port.in.MissionUseCase;
 import com.monglife.mongs.application.mong.port.in.command.GetTrainingTypeCommand;
 import com.monglife.mongs.application.mong.port.in.command.TrainingEndCommand;
 import com.monglife.mongs.application.mong.port.in.utils.MongTestUtil;
@@ -24,7 +25,8 @@ class ActivityServiceTest {
 
     private final MongPersistencePort mongPersistencePort = Mockito.mock(MongPersistencePort.class);
     private final MongReadPort mongReadPort = Mockito.mock(MongReadPort.class);
-    private final ActivityUseCase activityUseCase = new ActivityService(mongPersistencePort, mongReadPort);
+    private final MissionUseCase missionUseCase = Mockito.mock(MissionUseCase.class);
+    private final ActivityUseCase activityUseCase = new ActivityService(mongPersistencePort, mongReadPort, missionUseCase);
 
     @Nested
     @DisplayName("훈련 타입 목록 조회 단위 테스트")
