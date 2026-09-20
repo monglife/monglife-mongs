@@ -3,6 +3,7 @@ package com.monglife.mongs.application.battle.port.in.admin.service;
 import com.monglife.mongs.common.admin.log.AdminAuditLog;
 import com.monglife.mongs.application.battle.port.exception.NotExistsMatchException;
 import com.monglife.mongs.application.battle.port.exception.NotExistsQueuePlayerException;
+import com.monglife.mongs.application.battle.port.in.MatchUseCase;
 import com.monglife.mongs.application.battle.port.in.QueueUseCase;
 import com.monglife.mongs.application.battle.port.in.admin.AdminBattleUseCase;
 import com.monglife.mongs.application.battle.port.in.admin.command.AdminGetMatchesCommand;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,8 @@ public class AdminBattleService implements AdminBattleUseCase {
     private final MatchPublishPort matchPublishPort;
 
     private final QueueUseCase queueUseCase;
+
+    private final MatchUseCase matchUseCase;
 
     @Override
     public List<AdminQueuePlayerVo> getQueuePlayersUseCase() {
@@ -76,16 +80,26 @@ public class AdminBattleService implements AdminBattleUseCase {
                 .orElseThrow(NotExistsMatchException::new);
     }
 
+    /**
+     * 멈춘 매치 강제 종료.
+     *
+     * <p>입장 대기 중이던 매치는 아무도 싸우지 않았으므로 참가비를 돌려준다 - 기한 초과
+     * 스위퍼와 같은 정산 경로({@code cancelEnteringMatchUseCase})를 탄다. 이미 시작한 매치는
+     * 치러진 경기라 예전처럼 보상·정산 없이 END 로만 마감한다.
+     */
     @Override
-    @Transactional
     public Match terminateMatchUseCase(Long matchId) {
 
-        Match match = matchPersistencePort.getMatchPort(matchId)
-                .orElseThrow(NotExistsMatchException::new);
+        // 입장 대기 중이면 취소 + 환불. 경합에서 지면(그 사이 시작됐으면) 빈 값이 와서 아래로 떨어진다
+        Optional<Match> canceled = matchUseCase.cancelEnteringMatchUseCase(matchId);
 
-        match.adminEnd();
+        if (canceled.isPresent()) {
+            AdminAuditLog.write("match canceled matchId={} (입장 대기 중 - 참가비 환불)", matchId);
+            return canceled.get();
+        }
 
-        match = matchPersistencePort.saveMatchPort(match)
+        // 진행 중이던 매치는 정산 없이 END 로만 마감한다
+        Match match = matchPersistencePort.forceEndMatchPort(matchId)
                 .orElseThrow(NotExistsMatchException::new);
 
         AdminAuditLog.write("match terminated matchId={}", matchId);

@@ -4,13 +4,16 @@ import com.monglife.mongs.domain.battle.enums.MatchPickCode;
 import com.monglife.mongs.domain.battle.enums.MatchStateCode;
 import com.monglife.mongs.domain.battle.exception.AlreadyExistsMatchPickException;
 import com.monglife.mongs.domain.battle.exception.AlreadyStartMatchException;
+import com.monglife.mongs.domain.battle.exception.NotEnteringMatchException;
 import com.monglife.mongs.domain.battle.exception.NotExistsMatchPlayerException;
 import com.monglife.mongs.domain.battle.exception.NotPickedAllMatchPlayersException;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +34,13 @@ public class Match {
     private static final MatchStateCode INIT_MATCH_STATE_CODE = MatchStateCode.ENTERING;
     // 매치 최대 라운드 수
     private static final int MAX_ROUND = 10;
+    /**
+     * 입장 기한 (초). 이 시간이 지나도록 ENTERING 이면 취소하고 배팅을 돌려준다.
+     *
+     * <p>정상 입장은 매칭 알림 후 2초 안에 끝난다(앱이 토픽을 구독하고 바로 발행한다).
+     * 대기열의 봇 매칭 유예가 10초인 것과 견줘 넉넉하게 잡았다.
+     */
+    private static final long ENTER_EXPIRED_SECONDS = 30L;
 
     private final Long matchId;
 
@@ -71,10 +81,27 @@ public class Match {
     }
 
     /**
-     * 관리자 강제 종료. 멈춘 매치를 END 로 마감한다. 보상·정산은 하지 않는다.
+     * 관리자 강제 종료. 멈춘 매치를 END 로 마감한다. 보상은 주지 않는다.
+     *
+     * <p>입장 대기 중(ENTERING)인 매치라면 이걸 쓰지 말고 {@link #cancelEntering()} 을 써야 한다.
+     * 아무도 싸우지 않았으므로 배팅을 돌려줘야 하고, 그 경로는 CANCELED 로 간다.
      */
     public void adminEnd() {
         this.end();
+    }
+
+    /**
+     * 입장 기한 초과로 취소. 참가비 환불 대상이 된다.
+     *
+     * <p>ENTERING 이 아니면 던진다. 스위퍼가 후보를 고른 뒤 행을 잠그기까지의 틈에 마지막
+     * 플레이어가 입장해 매치가 시작될 수 있는데, 그때 살아 있는 매치를 닫으면 안 된다.
+     */
+    public void cancelEntering() {
+        if (!this.isEntering()) {
+            throw new NotEnteringMatchException();
+        }
+
+        this.stateCode = MatchStateCode.CANCELED;
     }
 
     /**
@@ -219,7 +246,11 @@ public class Match {
                 .filter(matchPlayer -> !matchPlayer.getIsEnter())
                 .sorted((mp1, mp2) -> {
                     if (mp1.getHp().equals(mp2.getHp())) {
-                        return mp1.getExitedAt().compareTo(mp2.getExitedAt());
+                        // 한 번도 입장하지 않은 플레이어는 exitedAt 이 null 이다. 사람 둘이 모두
+                        // 입장하지 않은 채 HP 가 같으면 그냥 비교하다 터진다. 그런 플레이어를
+                        // 가장 낮은 순위로 둔다 - 나가지도 않은 쪽이 이길 이유가 없다.
+                        return Comparator.nullsFirst(LocalDateTime::compareTo)
+                                .compare(mp1.getExitedAt(), mp2.getExitedAt());
                     }
                     return mp1.getHp().compareTo(mp2.getHp());
                 })
@@ -276,7 +307,10 @@ public class Match {
     }
 
     /**
-     * 매치 종료 여부 확인
+     * 매치 종료 여부 확인. <b>치러진 경기만</b> 해당한다 - 취소된 매치는 false 다.
+     *
+     * <p>승자 조회가 이 값으로 갈린다. 취소된 매치에서 승자를 뽑으면 아무도 입장하지 않은
+     * 채로 봇이 이겼다고 나오거나, 사람 둘이 동률이라 정렬하다 터진다.
      * @return 매치 종료 여부
      */
     public boolean isEnd() {
@@ -284,11 +318,30 @@ public class Match {
     }
 
     /**
-     * 마지막 라운드 여부 확인
+     * 입장 대기 중 여부 확인
+     * @return 입장 대기 중 여부
+     */
+    public boolean isEntering() {
+        return MatchStateCode.ENTERING.equals(this.stateCode);
+    }
+
+    /**
+     * 더 진행할 수 없는 상태인지 (종료 또는 취소).
+     *
+     * <p>입장·선택·퇴장을 막을 때는 {@link #isEnd()} 가 아니라 이걸 봐야 한다. 취소된 매치에
+     * 퇴장이 들어오면 {@code isEnd()} 기준으로는 통과해 버려 승리 보상까지 지급된다.
+     * @return 진행 불가 여부
+     */
+    public boolean isTerminal() {
+        return this.isEnd() || MatchStateCode.CANCELED.equals(this.stateCode);
+    }
+
+    /**
+     * 마지막 라운드 여부 확인. 취소도 포함한다 - 앱이 더 기다리지 않고 화면을 닫게 한다.
      * @return 마지막 라운드 여부
      */
     public boolean isLastRound() {
-        return MatchStateCode.END.equals(this.stateCode) || this.maxRound.equals(this.round);
+        return this.isTerminal() || this.maxRound.equals(this.round);
     }
 
     /**
@@ -402,5 +455,13 @@ public class Match {
      */
     public static int getInitMaxRound() {
         return MAX_ROUND;
+    }
+
+    /**
+     * 입장 기한 조회 (초)
+     * @return 입장 기한 초
+     */
+    public static long getEnterExpiredSeconds() {
+        return ENTER_EXPIRED_SECONDS;
     }
 }

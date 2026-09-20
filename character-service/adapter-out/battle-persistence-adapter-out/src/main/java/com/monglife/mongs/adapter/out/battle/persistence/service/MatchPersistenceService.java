@@ -188,4 +188,54 @@ public class MatchPersistenceService implements MatchPersistencePort {
 
         return Optional.empty();
     }
+
+    /**
+     * 입장 기한 초과 매치 취소. 잠금 → 상태 재확인 → 전이 → 저장을 한 트랜잭션에서 한다.
+     *
+     * <p>후보 조회가 잠그지 않으므로 여기 오기까지 매치가 시작됐을 수 있다. 잠근 뒤 다시
+     * 확인해서 ENTERING 이 아니면 아무것도 하지 않고 빈 값을 돌려준다.
+     *
+     * @param matchId 매치 ID
+     * @return 취소된 매치. 이미 시작했거나 없으면 빈 값
+     */
+    @Override
+    @Transactional
+    public Optional<Match> cancelEnteringMatchPort(Long matchId) {
+
+        Optional<MatchEntity> matchEntityOptional = matchRepository.findByMatchIdWithLock(matchId);
+
+        if (matchEntityOptional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        MatchEntity matchEntity = matchEntityOptional.get();
+        Match match = matchEntity.toDomain();
+
+        // 경합에서 졌다 - 그 사이 마지막 플레이어가 입장해 매치가 시작됐거나 이미 끝났다
+        if (!match.isEntering()) {
+            return Optional.empty();
+        }
+
+        match.cancelEntering();
+        matchEntity.update(match);
+
+        return Optional.of(matchRepository.save(matchEntity).toDomain());
+    }
+
+    /**
+     * 관리자 강제 종료. 조회 → 전이 → 저장을 한 트랜잭션에서 한다.
+     * @param matchId 매치 ID
+     * @return 종료된 매치. 없으면 빈 값
+     */
+    @Override
+    @Transactional
+    public Optional<Match> forceEndMatchPort(Long matchId) {
+
+        return matchRepository.findByMatchIdWithLock(matchId).map(matchEntity -> {
+            Match match = matchEntity.toDomain();
+            match.adminEnd();
+            matchEntity.update(match);
+            return matchRepository.save(matchEntity).toDomain();
+        });
+    }
 }

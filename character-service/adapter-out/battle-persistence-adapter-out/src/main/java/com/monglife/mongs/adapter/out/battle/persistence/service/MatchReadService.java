@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,5 +29,17 @@ public class MatchReadService implements MatchReadPort {
         return matchRepository.findByMatchId(matchId)
                 .map(MatchEntity::toDomain)
                 .or(Optional::empty);
+    }
+
+    /**
+     * 입장 기한이 지난 ENTERING 매치 ID 목록
+     * @param threshold 이 시각보다 오래된 매치
+     * @param limit 한 번에 가져올 최대 건수
+     * @return 매치 ID 목록
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> getExpiredEnteringMatchIdsPort(LocalDateTime threshold, int limit) {
+        return matchRepository.findExpiredEnteringMatchIds(threshold, limit);
     }
 }
