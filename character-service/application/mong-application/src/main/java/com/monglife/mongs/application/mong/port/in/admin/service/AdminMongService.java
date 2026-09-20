@@ -1,7 +1,6 @@
 package com.monglife.mongs.application.mong.port.in.admin.service;
 
 import com.monglife.mongs.common.admin.log.AdminAuditLog;
-import com.monglife.core.vo.page.PageResult;
 import com.monglife.mongs.application.mong.port.annotation.PublishMongPort;
 import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
 import com.monglife.mongs.application.mong.port.exception.InvalidCreateInventoryItemException;
@@ -25,6 +24,7 @@ import com.monglife.mongs.application.mong.port.out.MongSchedulerPort;
 import com.monglife.mongs.application.mong.port.out.vo.CreateInventoryVo;
 import com.monglife.mongs.application.mong.port.out.admin.AdminMongReadPort;
 import com.monglife.mongs.application.mong.port.out.admin.AdminMongSchedulerPort;
+import com.monglife.mongs.common.admin.vo.AdminPageRequestVo;
 import com.monglife.mongs.common.admin.vo.AdminPageVo;
 import com.monglife.mongs.domain.mong.enums.InventoryTypeCode;
 import com.monglife.mongs.domain.mong.enums.MongStateCode;
@@ -278,8 +278,8 @@ public class AdminMongService implements AdminMongUseCase {
 
     @Override
     @Transactional
-    public PageResult<Inventory> getInventoriesUseCase(Long mongId, Integer page, Integer size) {
-        return mongReadPort.getInventoriesPort(mongId, page, size);
+    public AdminPageVo<Inventory> getInventoriesUseCase(AdminPageRequestVo pageRequest, Long mongId) {
+        return adminMongReadPort.getInventoriesPort(pageRequest, mongId);
     }
 
     /**

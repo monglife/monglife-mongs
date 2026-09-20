@@ -1,6 +1,7 @@
 package com.monglife.mongs.application.mong.port.in.admin.service;
 
 import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMissionCodeException;
+import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalCountException;
 import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalException;
 import com.monglife.mongs.application.mong.port.exception.MissionInUseException;
 import com.monglife.mongs.application.mong.port.exception.MissionPublishedException;
@@ -104,6 +105,13 @@ public class AdminMissionService implements AdminMissionUseCase {
             throw new DuplicatedMissionGoalException();
         }
 
+        // uk_mission_goal (액션, 목표 타입, 목표치) 사전 검사. 주기는 키에 없어서 위 교차 주기 검사로는
+        // 같은 주기 안의 목표치 충돌이 걸러지지 않는다. 여기서 막지 않으면 DB 제약이 원시 500 으로 샌다.
+        if (Boolean.TRUE.equals(adminMissionMasterPort.isExistsGoalPort(
+                command.getActionCode(), command.getGoalTypeCode(), command.getGoalCount()))) {
+            throw new DuplicatedMissionGoalCountException();
+        }
+
         // 지급 시점이 아니라 등록 시점에 막는다. 운영자가 MAP 을 리워드로 넣으면
         // 사용자가 수령할 때가 되어서야 실패하는데, 그때는 이미 미션이 수령 처리된 뒤다.
         for (MissionReward reward : command.getRewards()) {
@@ -147,7 +155,7 @@ public class AdminMissionService implements AdminMissionUseCase {
         if (!current.getGoalCount().equals(command.getGoalCount())
                 && Boolean.TRUE.equals(adminMissionMasterPort.isExistsGoalPort(
                         current.getActionCode(), current.getGoalTypeCode(), command.getGoalCount(), command.getMissionId()))) {
-            throw new DuplicatedMissionGoalException();
+            throw new DuplicatedMissionGoalCountException();
         }
 
         for (MissionReward reward : command.getRewards()) {

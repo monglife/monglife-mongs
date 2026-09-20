@@ -1,5 +1,6 @@
 package com.monglife.mongs.adapter.in.admin.character.web.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.monglife.mongs.domain.mission.enums.MissionActionCode;
 import com.monglife.mongs.domain.mission.enums.MissionCycleCode;
 import com.monglife.mongs.domain.mission.enums.MissionGoalTypeCode;
@@ -34,8 +35,17 @@ public class AdminMissionResponseDto {
     /** 지금 사용자에게 나가는 중인가. true 면 수정·삭제가 막히고 노출 토글만 열린다 */
     private final Boolean isPublished;
 
-    /** 이번 주기 구간 (서비스 기준 시간대). 주간은 월요일~일요일 */
+    /**
+     * 이번 주기 구간 (서비스 기준 시간대). 주간은 월요일~일요일.
+     *
+     * <p>{@code @JsonFormat} 이 없으면 {@code [2026,9,20]} 배열로 나간다. 이 모듈의 다른 날짜
+     * 필드도 전부 명시적으로 형식을 지정한다 - 전역 Jackson 날짜 설정이 없다.
+     * {@code timezone} 은 넣지 않는다. 시점이 없는 날짜라 효과가 없고, 있으면 오해를 부른다.
+     */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private final LocalDate periodStart;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private final LocalDate periodEnd;
 
     /** 이번 주기에 당첨된 그룹. 이 값과 rotationGroup 이 같으면 게시 중이다 */

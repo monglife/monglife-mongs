@@ -29,6 +29,13 @@ public interface AdminMissionMasterPort {
     /** 목표치까지 같은 미션이 자기 말고 또 있는지 (uk_mission_goal 사전 검사) */
     Boolean isExistsGoalPort(MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount, Long excludeMissionId);
 
+    /**
+     * 목표치까지 같은 미션이 이미 있는지 (등록용 uk_mission_goal 사전 검사).
+     *
+     * <p>위 메서드와 달리 제외할 ID 가 없다. 등록 시점에는 자기 ID 가 아직 없기 때문이다.
+     */
+    Boolean isExistsGoalPort(MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount);
+
     /** 수정 가능한 값과 리워드를 바꾼다. 리워드는 통째 교체다 */
     Optional<Mission> updateMissionPort(AdminUpdateMissionCommand command);
 
