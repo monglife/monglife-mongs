@@ -13,7 +13,8 @@ public enum AdapterInMemberWebResponse implements Response {
     GET_COLLECTION_MONGS(HttpStatus.OK.value(), "MONGS-USER-MEMBER-001", "컬렉션 몽 목록 조회에 성공했습니다."),
     SEARCH_COLLECTION_MAP(HttpStatus.OK.value(), "MONGS-USER-MEMBER-002", "컬렉션 맵 탐색에 성공했습니다."),
 
-    CREATE_FEEDBACK(HttpStatus.OK.value(), "MONGS-USER-MEMBER-003", "오류 신고 등록에 성공했습니다."),
+    // MONGS-USER-MEMBER-003 은 오류 신고(CREATE_FEEDBACK) 자리였다. 신고가 discovery common-api 로
+    // 옮겨지면서 제거했다. 코드는 와이어 값이라 뒤 번호를 당기지 않고 자리를 비워 둔다.
 
     CREATE_PLAYER(HttpStatus.OK.value(), "MONGS-USER-MEMBER-004", "플레이어 등록에 성공했습니다."),
     GET_PLAYER(HttpStatus.OK.value(), "MONGS-USER-MEMBER-005", "플레이어 조회에 성공했습니다."),

@@ -4,7 +4,6 @@ import com.monglife.core.dto.response.ResponseDto;
 import com.monglife.core.enums.response.GlobalResponse;
 import com.monglife.core.exception.ErrorException;
 import com.monglife.mongs.adapter.in.member.web.controller.CollectionController;
-import com.monglife.mongs.adapter.in.member.web.controller.FeedbackController;
 import com.monglife.mongs.adapter.in.member.web.controller.PlayerController;
 import com.monglife.mongs.adapter.in.member.web.controller.StoreController;
 import jakarta.validation.ConstraintViolation;
@@ -25,7 +24,6 @@ import java.util.Set;
 
 @RestControllerAdvice(basePackageClasses = {
     CollectionController.class,
-    FeedbackController.class,
     PlayerController.class,
     StoreController.class
 })
