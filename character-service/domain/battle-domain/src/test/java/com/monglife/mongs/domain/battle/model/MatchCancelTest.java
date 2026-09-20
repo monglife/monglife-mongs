@@ -2,6 +2,7 @@ package com.monglife.mongs.domain.battle.model;
 
 import com.monglife.core.utils.CommonUtil;
 import com.monglife.mongs.domain.battle.enums.MatchStateCode;
+import com.monglife.mongs.domain.battle.exception.AlreadyEndMatchException;
 import com.monglife.mongs.domain.battle.exception.NotEnteringMatchException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -118,6 +119,62 @@ class MatchCancelTest {
 
             // act & assert
             assertThrows(NotEnteringMatchException.class, match::cancelEntering);
+        }
+    }
+
+    /**
+     * {@link #cancelEntering()} 가드의 짝. 그쪽이 "살아 있는 매치를 취소하지 마라" 라면
+     * 이쪽은 "끝난 매치의 마감 사유를 덮어쓰지 마라" 다.
+     */
+    @Nested
+    @DisplayName("관리자 강제 종료 가드")
+    class AdminEndGuard {
+
+        @Test
+        @DisplayName("진행 중인 매치는 END 로 마감된다.")
+        void adminEndWhenProcess() {
+            // arrange
+            Match match = match(MatchStateCode.PROCESS, List.of(human(true), bot()));
+
+            // act
+            match.adminEnd();
+
+            // assert
+            assertEquals(MatchStateCode.END, match.getStateCode());
+        }
+
+        @Test
+        @DisplayName("취소된 매치를 강제 종료하면 던진다. CANCELED 가 END 로 덮이면 취소 매치를 구분할 수 없다.")
+        void adminEndWhenCanceled() {
+            // arrange
+            Match match = match(MatchStateCode.ENTERING, List.of(human(false), bot()));
+            match.cancelEntering();
+
+            // act & assert
+            assertThrows(AlreadyEndMatchException.class, match::adminEnd);
+            assertEquals(MatchStateCode.CANCELED, match.getStateCode());
+        }
+
+        @Test
+        @DisplayName("두 번 강제 종료할 수 없다.")
+        void adminEndTwice() {
+            // arrange
+            Match match = match(MatchStateCode.PROCESS, List.of(human(true), bot()));
+            match.adminEnd();
+
+            // act & assert
+            assertThrows(AlreadyEndMatchException.class, match::adminEnd);
+            assertEquals(MatchStateCode.END, match.getStateCode());
+        }
+
+        @Test
+        @DisplayName("입장 대기 중인 매치는 막지 않는다. 그 경로는 호출부가 cancelEntering 으로 먼저 거른다.")
+        void adminEndWhenEnteringIsNotGuarded() {
+            // arrange
+            Match match = match(MatchStateCode.ENTERING, List.of(human(false), bot()));
+
+            // act & assert
+            assertDoesNotThrow(match::adminEnd);
         }
     }
 
