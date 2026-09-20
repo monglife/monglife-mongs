@@ -2,7 +2,6 @@ package com.monglife.mongs.adapter.in.admin.character.web.controller;
 
 import com.monglife.core.dto.response.PageResponseDto;
 import com.monglife.core.dto.response.ResponseDto;
-import com.monglife.core.vo.page.PageResult;
 import com.monglife.module.common.logging.annotation.EntryLoggingPoint;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminInventoryGrantRequestDto;
 import com.monglife.mongs.adapter.in.admin.character.web.dto.request.AdminMongSleepRequestDto;
@@ -13,6 +12,7 @@ import com.monglife.mongs.adapter.in.admin.character.web.dto.response.*;
 import com.monglife.mongs.adapter.in.admin.character.web.enums.AdapterInAdminCharacterWebResponse;
 import com.monglife.mongs.adapter.in.admin.character.web.util.AdminPage;
 import com.monglife.mongs.adapter.in.admin.character.web.util.PageQuery;
+import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
 import com.monglife.mongs.application.mong.port.in.admin.AdminMongUseCase;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminGetMongsCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongSleepCommand;
@@ -20,7 +20,6 @@ import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMong
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStatusCommand;
 import com.monglife.mongs.domain.mong.enums.MongStateCode;
 import com.monglife.mongs.domain.mong.enums.MongStatusCode;
-import com.monglife.mongs.domain.mong.model.Inventory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -157,8 +156,11 @@ public class AdminMongController {
             @PathVariable Long mongId,
             @Valid @RequestBody AdminTaskCreateRequestDto requestDto
     ) {
+        // 목록이 돌려준 코드(DECREASE-STATUS)와 enum 이름(DECREASE_STATUS) 을 둘 다 받는다
+        MongSchedulerType schedulerType = MongSchedulerType.fromCode(requestDto.getSchedulerTypeCode());
+
         return ResponseEntity.ok(AdapterInAdminCharacterWebResponse.CREATE_TASK
-                .toResponseDto(AdminTaskResponseDto.of(adminMongUseCase.createTaskUseCase(mongId, requestDto.getSchedulerTypeCode()))));
+                .toResponseDto(AdminTaskResponseDto.of(adminMongUseCase.createTaskUseCase(mongId, schedulerType))));
     }
 
     @EntryLoggingPoint
@@ -168,18 +170,10 @@ public class AdminMongController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
-        // 앱용 인벤토리 조회는 1 부터 시작하는 페이지를 쓴다. 관리자 웹의 0-based 를 그대로 맞춰 준다.
-        int adminPage = PageQuery.page(page);
-        int adminSize = PageQuery.size(size);
-
-        PageResult<Inventory> pageResult = adminMongUseCase.getInventoriesUseCase(mongId, adminPage + 1, adminSize);
-
-        List<AdminInventoryResponseDto> items = pageResult.getResult().stream().map(AdminInventoryResponseDto::of).toList();
-
-        return ResponseEntity.ok()
-                .header(AdminPage.TOTAL_COUNT_HEADER, String.valueOf((long) pageResult.getTotalPage() * adminSize))
-                .body(AdapterInAdminCharacterWebResponse.GET_INVENTORIES.toPageResponseDto(
-                        items, adminPage, adminSize, pageResult.getTotalPage(), pageResult.getIsLastPage()));
+        return AdminPage.toResponse(
+                AdapterInAdminCharacterWebResponse.GET_INVENTORIES,
+                adminMongUseCase.getInventoriesUseCase(PageQuery.of(page, size, null, Set.of(), "inventoryId", false), mongId),
+                AdminInventoryResponseDto::of);
     }
 
     @EntryLoggingPoint

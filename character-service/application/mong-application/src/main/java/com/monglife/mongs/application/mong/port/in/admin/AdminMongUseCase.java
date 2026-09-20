@@ -1,12 +1,12 @@
 package com.monglife.mongs.application.mong.port.in.admin;
 
-import com.monglife.core.vo.page.PageResult;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminGetMongsCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongSleepCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStateCommand;
 import com.monglife.mongs.application.mong.port.in.admin.command.AdminUpdateMongStatusCommand;
 import com.monglife.mongs.application.mong.port.enums.MongSchedulerType;
 import com.monglife.mongs.application.mong.port.in.admin.vo.AdminTaskVo;
+import com.monglife.mongs.common.admin.vo.AdminPageRequestVo;
 import com.monglife.mongs.common.admin.vo.AdminPageVo;
 import com.monglife.mongs.domain.mong.enums.InventoryTypeCode;
 import com.monglife.mongs.domain.mong.model.Inventory;
@@ -55,7 +55,8 @@ public interface AdminMongUseCase {
 
     List<MongEvolutionHistory> getEvolutionHistoriesUseCase(Long accountId);
 
-    PageResult<Inventory> getInventoriesUseCase(Long mongId, Integer page, Integer size);
+    /** 인벤토리 목록. 관리자 웹은 총 건수(X-Total-Count)를 쓰므로 앱 경로와 다른 반환 타입이다 */
+    AdminPageVo<Inventory> getInventoriesUseCase(AdminPageRequestVo pageRequest, Long mongId);
 
     /** 인벤토리 아이템 수동 지급 (FOOD/SNACK) */
     Inventory grantInventoryUseCase(Long mongId, String inventoryCode, InventoryTypeCode inventoryTypeCode);

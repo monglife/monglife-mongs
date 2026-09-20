@@ -6,6 +6,7 @@ import com.monglife.core.exception.ErrorException;
 import com.monglife.mongs.adapter.in.admin.character.web.controller.AdminHealthController;
 import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMasterCodeException;
 import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMissionCodeException;
+import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalCountException;
 import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalException;
 import com.monglife.mongs.application.mong.port.exception.MissionInUseException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMissionException;
@@ -18,6 +19,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,8 +47,8 @@ public class AdminCharacterExceptionHandler {
     }
 
 
-    /** 이미 있는 코드로 등록했거나, 다른 주기와 겹치거나, 쓰이는 중인 미션을 지우려 한 경우 */
-    @ExceptionHandler({ AlreadyExistsMasterCodeException.class, AlreadyExistsMissionCodeException.class, DuplicatedMissionGoalException.class, MissionInUseException.class })
+    /** 이미 있는 코드로 등록했거나, 다른 주기와 겹치거나, 목표치가 같거나, 쓰이는 중인 미션을 지우려 한 경우 */
+    @ExceptionHandler({ AlreadyExistsMasterCodeException.class, AlreadyExistsMissionCodeException.class, DuplicatedMissionGoalException.class, DuplicatedMissionGoalCountException.class, MissionInUseException.class })
     public ResponseEntity<ResponseDto<Map<String, Object>>> handleConflict(ErrorException e) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT.value())
@@ -99,6 +101,20 @@ public class AdminCharacterExceptionHandler {
         return ResponseEntity
                 .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
                 .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", e.getParameterName() + "(은)는 필수 파라미터 입니다.")));
+    }
+
+    /**
+     * 본문을 읽지 못한 경우 (깨진 JSON, enum 에 없는 값 등).
+     *
+     * <p>이게 없으면 Spring 기본 오류 페이지가 {@code {"timestamp":…,"status":400,"error":"Bad Request"}}
+     * 를 내보낸다. 응답 코드가 없어 클라이언트가 원인을 구분할 수 없다 - 실제로 스케줄 등록에서
+     * 올바른 코드와 존재하지 않는 코드의 응답이 똑같아 한참 헤맸다.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        return ResponseEntity
+                .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
+                .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", "요청 본문을 읽을 수 없습니다.")));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

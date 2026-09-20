@@ -14,6 +14,7 @@ public enum DomainBattleErrorCode implements ErrorCode {
     ALREADY_EXISTS_MATCH_PICK("500-100-003", "이미 현재 라운드에 선택을 완료했습니다."),
     NOT_EXISTS_MATCH_PLAYER("500-100-004", "매치 플레이어가 존재하지 않습니다."),
     NOT_PICKED_ALL_MATCH_PLAYERS("500-100-005", "모든 매치 플레이어가 매치 선택을 하지 않았습니다"),
+    NOT_ENTERING_MATCH("500-100-006", "입장 대기 중인 매치가 아닙니다."),
     ;
 
     private final String code;

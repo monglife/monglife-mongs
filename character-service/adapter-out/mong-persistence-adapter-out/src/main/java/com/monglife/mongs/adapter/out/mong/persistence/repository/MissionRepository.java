@@ -54,4 +54,13 @@ public interface MissionRepository extends JpaRepository<MissionEntity, Long> {
      */
     boolean existsByActionCodeAndGoalTypeCodeAndGoalCountAndMissionIdNot(
             MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount, Long missionId);
+
+    /**
+     * 목표치까지 같은 미션이 이미 있는지.
+     *
+     * <p>등록에서 쓴다. 위 {@code ...AndMissionIdNot} 을 재사용할 수 없다 - 등록 시점에는 자기 ID 가
+     * 없어서 null 을 넘기게 되는데, 그러면 {@code mission_id <> NULL} 이 되어 영원히 false 다.
+     */
+    boolean existsByActionCodeAndGoalTypeCodeAndGoalCount(
+            MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount);
 }

@@ -87,6 +87,12 @@ public class AdminMissionMasterService implements AdminMissionMasterPort {
         return missionRepository.existsByActionCodeAndGoalTypeCodeAndGoalCountAndMissionIdNot(actionCode, goalTypeCode, goalCount, excludeMissionId);
     }
 
+    @Override
+    @Transactional
+    public Boolean isExistsGoalPort(MissionActionCode actionCode, MissionGoalTypeCode goalTypeCode, Integer goalCount) {
+        return missionRepository.existsByActionCodeAndGoalTypeCodeAndGoalCount(actionCode, goalTypeCode, goalCount);
+    }
+
     /**
      * 수정. 리워드는 부분 갱신이 아니라 통째 교체다.
      *
