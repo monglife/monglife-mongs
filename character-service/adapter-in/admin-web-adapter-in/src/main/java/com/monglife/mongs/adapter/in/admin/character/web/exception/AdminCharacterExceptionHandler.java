@@ -15,6 +15,7 @@ import com.monglife.mongs.application.mong.port.exception.NotExistsMongException
 import com.monglife.mongs.application.mong.port.exception.NotExistsTaskException;
 import com.monglife.mongs.application.battle.port.exception.NotExistsMatchException;
 import com.monglife.mongs.application.battle.port.exception.NotExistsQueuePlayerException;
+import com.monglife.mongs.domain.battle.exception.AlreadyEndMatchException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -47,8 +48,14 @@ public class AdminCharacterExceptionHandler {
     }
 
 
-    /** 이미 있는 코드로 등록했거나, 다른 주기와 겹치거나, 목표치가 같거나, 쓰이는 중인 미션을 지우려 한 경우 */
-    @ExceptionHandler({ AlreadyExistsMasterCodeException.class, AlreadyExistsMissionCodeException.class, DuplicatedMissionGoalException.class, DuplicatedMissionGoalCountException.class, MissionInUseException.class })
+    /**
+     * 이미 있는 코드로 등록했거나, 다른 주기와 겹치거나, 목표치가 같거나, 쓰이는 중인 미션을 지우려 한 경우.
+     *
+     * <p>끝난 매치를 다시 강제 종료하려는 것도 여기다. 요청 자체는 멀쩡하고 그 사이 상태가
+     * 바뀐 것이라 400 보다 409 가 맞다 — 관리자 웹은 목록을 30초마다 다시 읽으므로 이 경합이
+     * 일상적으로 일어난다.
+     */
+    @ExceptionHandler({ AlreadyExistsMasterCodeException.class, AlreadyExistsMissionCodeException.class, DuplicatedMissionGoalException.class, DuplicatedMissionGoalCountException.class, MissionInUseException.class, AlreadyEndMatchException.class })
     public ResponseEntity<ResponseDto<Map<String, Object>>> handleConflict(ErrorException e) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT.value())

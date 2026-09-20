@@ -86,6 +86,10 @@ public class AdminBattleService implements AdminBattleUseCase {
      * <p>입장 대기 중이던 매치는 아무도 싸우지 않았으므로 참가비를 돌려준다 - 기한 초과
      * 스위퍼와 같은 정산 경로({@code cancelEnteringMatchUseCase})를 탄다. 이미 시작한 매치는
      * 치러진 경기라 예전처럼 보상·정산 없이 END 로만 마감한다.
+     *
+     * <p>이미 끝난 매치면 {@code AlreadyEndMatchException} 이 올라가 409 가 된다. 관리자 목록은
+     * 30초마다 다시 읽고 입장 기한도 30초라, 스위퍼가 방금 CANCELED 로 마감한 매치의 버튼이
+     * 화면에 남아 있는 구간이 늘 있다. 그걸 누르면 취소 사유가 END 로 덮이므로 막는다.
      */
     @Override
     public Match terminateMatchUseCase(Long matchId) {

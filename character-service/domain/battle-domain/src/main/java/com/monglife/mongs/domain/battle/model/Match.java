@@ -2,6 +2,7 @@ package com.monglife.mongs.domain.battle.model;
 
 import com.monglife.mongs.domain.battle.enums.MatchPickCode;
 import com.monglife.mongs.domain.battle.enums.MatchStateCode;
+import com.monglife.mongs.domain.battle.exception.AlreadyEndMatchException;
 import com.monglife.mongs.domain.battle.exception.AlreadyExistsMatchPickException;
 import com.monglife.mongs.domain.battle.exception.AlreadyStartMatchException;
 import com.monglife.mongs.domain.battle.exception.NotEnteringMatchException;
@@ -85,8 +86,17 @@ public class Match {
      *
      * <p>입장 대기 중(ENTERING)인 매치라면 이걸 쓰지 말고 {@link #cancelEntering()} 을 써야 한다.
      * 아무도 싸우지 않았으므로 배팅을 돌려줘야 하고, 그 경로는 CANCELED 로 간다.
+     *
+     * <p>이미 끝난 매치면 던진다. 스위퍼가 CANCELED 로 마감한 직후 관리자가 같은 매치의
+     * '강제 종료' 를 누르면 그 CANCELED 가 END + round 0 으로 덮인다. 하필 그 모양이
+     * CANCELED 를 새로 만들어 없애려던 서명이라, 취소된 매치를 다시 구분할 수 없게 된다.
+     * 호출부가 행을 잠근 뒤 부르므로({@code findByMatchIdWithLock}) 이 검사도 잠금 아래다.
      */
     public void adminEnd() {
+        if (this.isTerminal()) {
+            throw new AlreadyEndMatchException();
+        }
+
         this.end();
     }
 
