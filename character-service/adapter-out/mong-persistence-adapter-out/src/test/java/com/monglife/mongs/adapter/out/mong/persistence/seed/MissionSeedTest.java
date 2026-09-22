@@ -49,7 +49,12 @@ class MissionSeedTest {
 
     private record Reward(long missionId, String rewardTypeCode, String rewardCode, String inventoryTypeCode, int amount) {}
 
-    private static final String MIGRATION = "configs/migration/2026-09-17-mission.sql";
+    /**
+     * 마이그레이션은 날짜별 파일에서 백엔드 버전 기준 통합본으로 바뀌었다.
+     * 버전을 올려 새 파일을 만들 때 여기도 같이 바꿔야 한다 - 안 바꾸면 파일을 못 찾아
+     * 이 클래스의 테스트가 통째로 깨진다.
+     */
+    private static final String MIGRATION = "configs/migration/v3.1.0.sql";
 
     /**
      * 마이그레이션 SQL 읽기.
