@@ -18,7 +18,8 @@ public enum ApplicationMemberErrorCode implements ErrorCode {
     INVALID_CREATE_COLLECTION_MONG("400-201-007", "컬렉션 몽을 등록하는데 실패했습니다."),
     INVALID_CREATE_ORDER("400-201-008", "주문을 등록하는데 실패했습니다."),
     INVALID_CREATE_PLAYER("400-201-009", "플레이어를 등록하는데 실패했습니다."),
-    INVALID_CREATE_FEEDBACK("400-201-010", "오류 신고를 등록하는데 실패했습니다."),
+    // 400-201-010 은 오류 신고(INVALID_CREATE_FEEDBACK) 자리였다. 신고가 discovery common-api 로
+    // 옮겨지면서 제거했다. 코드는 와이어 값이라 뒤 번호를 당기지 않고 자리를 비워 둔다.
     NOT_EXISTS_NOTICE("400-201-011", "공지 사항 조회에 실패했습니다.."),
     ;
 

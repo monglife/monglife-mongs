@@ -1,0 +1,137 @@
+package com.monglife.mongs.adapter.in.admin.character.web.exception;
+
+import com.monglife.core.dto.response.ResponseDto;
+import com.monglife.core.enums.response.GlobalResponse;
+import com.monglife.core.exception.ErrorException;
+import com.monglife.mongs.adapter.in.admin.character.web.controller.AdminHealthController;
+import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMasterCodeException;
+import com.monglife.mongs.application.mong.port.exception.AlreadyExistsMissionCodeException;
+import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalCountException;
+import com.monglife.mongs.application.mong.port.exception.DuplicatedMissionGoalException;
+import com.monglife.mongs.application.mong.port.exception.MissionInUseException;
+import com.monglife.mongs.application.mong.port.exception.NotExistsMissionException;
+import com.monglife.mongs.application.mong.port.exception.NotExistsMasterException;
+import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
+import com.monglife.mongs.application.mong.port.exception.NotExistsTaskException;
+import com.monglife.mongs.application.battle.port.exception.NotExistsMatchException;
+import com.monglife.mongs.application.battle.port.exception.NotExistsQueuePlayerException;
+import com.monglife.mongs.domain.battle.exception.AlreadyEndMatchException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * 관리자 컨트롤러 패키지에만 적용된다. 없는 자원은 404, 나머지 도메인 예외는 400.
+ * 401 은 쓰지 않는다 — 관리자 웹이 401 을 토큰 만료로 보고 재발급을 시도한다.
+ */
+@RestControllerAdvice(basePackageClasses = AdminHealthController.class)
+public class AdminCharacterExceptionHandler {
+
+    @ExceptionHandler({ NotExistsMongException.class, NotExistsTaskException.class, NotExistsMatchException.class, NotExistsQueuePlayerException.class, NotExistsMasterException.class, NotExistsMissionException.class })
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleNotFound(ErrorException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND.value())
+                .body(e.getErrorCode().toResponseDto(HttpStatus.NOT_FOUND.value(), e.getResult()));
+    }
+
+
+    /**
+     * 이미 있는 코드로 등록했거나, 다른 주기와 겹치거나, 목표치가 같거나, 쓰이는 중인 미션을 지우려 한 경우.
+     *
+     * <p>끝난 매치를 다시 강제 종료하려는 것도 여기다. 요청 자체는 멀쩡하고 그 사이 상태가
+     * 바뀐 것이라 400 보다 409 가 맞다 — 관리자 웹은 목록을 30초마다 다시 읽으므로 이 경합이
+     * 일상적으로 일어난다.
+     */
+    @ExceptionHandler({ AlreadyExistsMasterCodeException.class, AlreadyExistsMissionCodeException.class, DuplicatedMissionGoalException.class, DuplicatedMissionGoalCountException.class, MissionInUseException.class, AlreadyEndMatchException.class })
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleConflict(ErrorException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT.value())
+                .body(e.getErrorCode().toResponseDto(HttpStatus.CONFLICT.value(), e.getResult()));
+    }
+    @ExceptionHandler(ErrorException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleErrorException(ErrorException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST.value())
+                .body(e.getErrorCode().toResponseDto(HttpStatus.BAD_REQUEST.value(), e.getResult()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+
+        BindingResult bindingResult = e.getBindingResult();
+        Set<String> errorFields = new LinkedHashSet<>();
+        StringBuilder messageBuilder = new StringBuilder();
+
+        for (FieldError fieldError : bindingResult.getFieldErrors()) {
+            messageBuilder.append("'").append(fieldError.getField()).append("'(은)는 ").append(fieldError.getDefaultMessage()).append(". ");
+            errorFields.add(fieldError.getField());
+        }
+
+        return ResponseEntity
+                .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
+                .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", messageBuilder.toString(), "errorFields", errorFields)));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleConstraintViolationException(ConstraintViolationException e) {
+
+        Set<String> errorFields = new LinkedHashSet<>();
+        StringBuilder messageBuilder = new StringBuilder();
+
+        for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+            String[] pathParts = violation.getPropertyPath().toString().split("\\.");
+            String fieldName = pathParts[pathParts.length - 1];
+            messageBuilder.append("'").append(fieldName).append("'(은)는 ").append(violation.getMessage()).append(". ");
+            errorFields.add(fieldName);
+        }
+
+        return ResponseEntity
+                .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
+                .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", messageBuilder.toString(), "errorFields", errorFields)));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        return ResponseEntity
+                .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
+                .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", e.getParameterName() + "(은)는 필수 파라미터 입니다.")));
+    }
+
+    /**
+     * 본문을 읽지 못한 경우 (깨진 JSON, enum 에 없는 값 등).
+     *
+     * <p>이게 없으면 Spring 기본 오류 페이지가 {@code {"timestamp":…,"status":400,"error":"Bad Request"}}
+     * 를 내보낸다. 응답 코드가 없어 클라이언트가 원인을 구분할 수 없다 - 실제로 스케줄 등록에서
+     * 올바른 코드와 존재하지 않는 코드의 응답이 똑같아 한참 헤맸다.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        return ResponseEntity
+                .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
+                .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", "요청 본문을 읽을 수 없습니다.")));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ResponseDto<Map<String, Object>>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+
+        String message = e.getPropertyName() + "의 타입";
+        message += e.getRequiredType() != null ? "은 '" + e.getRequiredType().getSimpleName() + "' 이여야 합니다." : "이 적절하지 않습니다.";
+
+        return ResponseEntity
+                .status(GlobalResponse.INVALID_PARAMETER.getHttpStatus())
+                .body(GlobalResponse.INVALID_PARAMETER.toResponseDto(Map.of("message", message)));
+    }
+}

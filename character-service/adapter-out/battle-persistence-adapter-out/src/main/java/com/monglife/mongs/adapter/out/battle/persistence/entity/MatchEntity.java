@@ -21,7 +21,13 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners({ AuditingEntityListener.class })
-@Table(name = "mongs_match")
+@Table(
+        name = "mongs_match",
+        // 입장 기한 스위퍼가 5초마다 (state_code, created_at) 으로 훑는다. 끝난 매치는 지우지 않아
+        // 표가 단조 증가하므로 인덱스가 없으면 그 주기마다 풀스캔이 된다.
+        // stg/prd 는 hbm2ddl.auto 가 none 이라 이 선언만으로는 안 생긴다 - 마이그레이션도 함께 돌린다.
+        indexes = { @Index(name = "idx_match_state_created", columnList = "state_code, created_at") }
+)
 public class MatchEntity extends BaseTimeEntity {
 
     @Id

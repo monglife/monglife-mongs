@@ -340,7 +340,9 @@ public class MongPersistenceService implements
             mongEvolutionHistoryRepository.save(mongEvolutionHistoryEntity);
         }
 
-        return Optional.of(mongEvolutionHistoryEntity.toDomain());
+        // 이름은 채우지 않는다. 이 반환값은 쓰기 결과 확인용이고 호출 측(ManagementService)이
+        // 받아 쓰지 않는다 - 이름 하나 때문에 마스터를 한 번 더 읽을 이유가 없다.
+        return Optional.of(mongEvolutionHistoryEntity.toDomain(null));
     }
 }
 

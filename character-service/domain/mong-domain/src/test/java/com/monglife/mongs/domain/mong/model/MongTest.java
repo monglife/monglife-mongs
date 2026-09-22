@@ -649,4 +649,58 @@ class MongTest {
             assertEquals(payPoint, mong.getPayPoint());
         }
     }
+
+    @Nested
+    @DisplayName("미션 리워드 경험치 지급 단위 테스트")
+    class MissionReward {
+
+        @Test
+        @DisplayName("경험치가 지급된다.")
+        void missionReward() {
+            // arrange
+            final long mongId = 1L;
+            final long accountId = 1L;
+            final double maxStatus = 100D;
+            final Mong mong = MongTestUtil.getFirstLevelMong(mongId, accountId, maxStatus);
+            final double before = mong.getExp();
+
+            // act
+            mong.missionReward(20D);
+
+            // assert
+            assertEquals(before + 20D, mong.getExp());
+        }
+
+        @Test
+        @DisplayName("최대 지수를 넘지 않는다.")
+        void missionRewardClampToMaxStatus() {
+            // arrange
+            final long mongId = 1L;
+            final long accountId = 1L;
+            final double maxStatus = 100D;
+            final Mong mong = MongTestUtil.getFirstLevelMong(mongId, accountId, maxStatus);
+
+            // act
+            mong.missionReward(Double.MAX_VALUE);
+
+            // assert
+            assertEquals(maxStatus, mong.getExp());
+        }
+
+        @Test
+        @DisplayName("경험치가 최대 지수에 도달하면 진화 준비 상태가 된다.")
+        void missionRewardSyncStateCode() {
+            // arrange
+            final long mongId = 1L;
+            final long accountId = 1L;
+            final double maxStatus = 100D;
+            final Mong mong = MongTestUtil.getFirstLevelMong(mongId, accountId, maxStatus);
+
+            // act
+            mong.missionReward(maxStatus);
+
+            // assert - 이 동기화가 빠지면 미션으로 진화 조건을 채워도 진화 버튼이 안 뜬다
+            assertEquals(MongStateCode.EVOLUTION_READY, mong.getStateCode());
+        }
+    }
 }

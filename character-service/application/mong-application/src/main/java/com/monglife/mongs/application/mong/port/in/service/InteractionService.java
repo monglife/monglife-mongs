@@ -2,10 +2,13 @@ package com.monglife.mongs.application.mong.port.in.service;
 
 import com.monglife.core.vo.page.PageResult;
 import com.monglife.mongs.application.mong.port.annotation.CheckMongDead;
+import com.monglife.mongs.application.mong.port.annotation.MissionProgress;
 import com.monglife.mongs.application.mong.port.annotation.PublishMongPort;
 import com.monglife.mongs.application.mong.port.exception.*;
 import com.monglife.mongs.application.mong.port.in.InteractionUseCase;
+import com.monglife.mongs.application.mong.port.in.MissionUseCase;
 import com.monglife.mongs.application.mong.port.in.command.*;
+import com.monglife.mongs.domain.mission.enums.MissionActionCode;
 import com.monglife.mongs.application.mong.port.out.MongEventPort;
 import com.monglife.mongs.application.mong.port.out.MongPersistencePort;
 import com.monglife.mongs.application.mong.port.out.MongReadPort;
@@ -30,6 +33,8 @@ public class InteractionService implements InteractionUseCase {
     private final MongReadPort mongReadPort;
 
     private final MongEventPort mongEventPort;
+
+    private final MissionUseCase missionUseCase;
 
     /**
      * 음식 목록 조회
@@ -66,6 +71,7 @@ public class InteractionService implements InteractionUseCase {
     @Transactional
     @CheckMongDead
     @PublishMongPort
+    @MissionProgress(value = MissionActionCode.FEED_FOOD, detailField = "foodCode")
     public Mong feedFoodUseCase(FeedFoodCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -76,8 +82,13 @@ public class InteractionService implements InteractionUseCase {
         Food food = mongReadPort.getFoodPort(command.getFoodCode(), mong.getMongId())
                 .orElseThrow(NotExistsFoodException::new);
 
+        int payPointBeforeFeed = mong.getPayPoint();
+
         // 음식 섭취
         mong.feedWithBuy(food);
+
+        // 소비 페이 포인트 누적 미션. 가격을 다시 계산하지 않고 실제 차감액을 쓴다
+        this.accumulatePayPointSpend(command.getAccountId(), payPointBeforeFeed - mong.getPayPoint());
 
         // 몽 정보 동기화
         mongPersistencePort.saveMongPort(mong)
@@ -97,6 +108,7 @@ public class InteractionService implements InteractionUseCase {
     @Transactional
     @CheckMongDead
     @PublishMongPort
+    @MissionProgress(value = MissionActionCode.FEED_SNACK, detailField = "snackCode")
     public Mong feedSnackUseCase(FeedSnackCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -107,8 +119,13 @@ public class InteractionService implements InteractionUseCase {
         Snack snack = mongReadPort.getSnackPort(command.getSnackCode(), mong.getMongId())
                 .orElseThrow(NotExistsSnackException::new);
 
+        int payPointBeforeFeed = mong.getPayPoint();
+
         // 간식 섭취
         mong.feedWithBuy(snack);
+
+        // 소비 페이 포인트 누적 미션
+        this.accumulatePayPointSpend(command.getAccountId(), payPointBeforeFeed - mong.getPayPoint());
 
         // 몽 정보 동기화
         mongPersistencePort.saveMongPort(mong)
@@ -176,6 +193,13 @@ public class InteractionService implements InteractionUseCase {
         mongPersistencePort.deleteInventoryPort(inventory.getInventoryId())
                 .orElseThrow(InvalidDeleteInventoryItemException::new);
 
+        // 아이템 코드가 커맨드에도 반환값에도 없어 애노테이션으로는 못 넘긴다
+        missionUseCase.increaseMissionProgressUseCase(IncreaseMissionProgressCommand.builder()
+                .accountId(command.getAccountId())
+                .actionCode(MissionActionCode.USE_INVENTORY)
+                .detailCode(inventory.getInventoryCode())
+                .build());
+
         return mong;
     }
 
@@ -184,14 +208,20 @@ public class InteractionService implements InteractionUseCase {
      */
     @Override
     @Transactional
+    @MissionProgress(MissionActionCode.BUY_RANDOM_DRAW_TICKET)
     public Mong buyRandomDrawTicketUseCase(BuyRandomDrawTicketCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
                 .orElseThrow(NotExistsMongException::new)
                 .verify(command.getAccountId());
 
+        int payPointBeforeBuy = mong.getPayPoint();
+
         // 랜덤 뽑기 티켓 구매
         mong.buyRandomDrawTicket();
+
+        // 소비 페이 포인트 누적 미션
+        this.accumulatePayPointSpend(command.getAccountId(), payPointBeforeBuy - mong.getPayPoint());
 
         // 몽 정보 동기화
         mongPersistencePort.saveMongPort(mong)
@@ -205,6 +235,7 @@ public class InteractionService implements InteractionUseCase {
      */
     @Override
     @Transactional
+    @MissionProgress(value = MissionActionCode.RANDOM_DRAW, detailField = "randomDrawCode")
     public RandomDraw randomDrawUseCase(RandomDrawCommand command) {
 
         Mong mong = mongPersistencePort.getMongPort(command.getMongId())
@@ -249,5 +280,21 @@ public class InteractionService implements InteractionUseCase {
         }
 
         return randomDraw;
+    }
+
+    /**
+     * 소비 페이 포인트 누적 미션 반영. 0 이하면 부를 필요가 없다
+     */
+    private void accumulatePayPointSpend(Long accountId, int spent) {
+
+        if (spent <= 0) {
+            return;
+        }
+
+        missionUseCase.increaseMissionProgressUseCase(IncreaseMissionProgressCommand.builder()
+                .accountId(accountId)
+                .actionCode(MissionActionCode.PAY_POINT_SPEND)
+                .amount(spent)
+                .build());
     }
 }

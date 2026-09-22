@@ -47,6 +47,21 @@ public class NoticeEntity extends BaseTimeEntity {
     }
 
     /**
+     * 관리자 공지 사항 수정
+     */
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    /**
+     * 관리자 공지 사항 숨김 여부 수정
+     */
+    public void updateHided(Boolean isHided) {
+        this.isHided = isHided;
+    }
+
+    /**
      * 엔티티 도메인 변환
      * @return 공지 사항 도메인 객체
      */

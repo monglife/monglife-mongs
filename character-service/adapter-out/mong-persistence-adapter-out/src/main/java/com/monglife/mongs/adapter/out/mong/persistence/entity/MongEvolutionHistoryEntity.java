@@ -37,10 +37,15 @@ public class MongEvolutionHistoryEntity {
         this.evolutionScore = evolutionScore;
     }
 
-    public MongEvolutionHistory toDomain() {
+    /**
+     * @param mongName 몽 이름. 이 표는 코드만 들고 있어 호출 측이 찾아 넣는다.
+     *                 마스터에서 지워진 코드면 null 이 온다 - 이력은 그대로 남기고 이름만 비운다.
+     */
+    public MongEvolutionHistory toDomain(String mongName) {
         return MongEvolutionHistory.builder()
                 .mongEvolutionHistoryId(mongEvolutionHistoryId)
                 .mongCode(mongCode)
+                .mongName(mongName)
                 .accountId(accountId)
                 .evolutionScore(evolutionScore)
                 .build();

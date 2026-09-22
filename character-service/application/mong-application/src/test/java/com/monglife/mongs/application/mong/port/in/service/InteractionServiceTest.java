@@ -4,6 +4,7 @@ import com.monglife.core.vo.page.PageResult;
 import com.monglife.mongs.application.mong.port.exception.InvalidUseInventoryItemException;
 import com.monglife.mongs.application.mong.port.exception.NotExistsMongException;
 import com.monglife.mongs.application.mong.port.in.InteractionUseCase;
+import com.monglife.mongs.application.mong.port.in.MissionUseCase;
 import com.monglife.mongs.application.mong.port.in.command.*;
 import com.monglife.mongs.application.mong.port.in.utils.MongTestUtil;
 import com.monglife.mongs.application.mong.port.out.MongEventPort;
@@ -27,7 +28,8 @@ class InteractionServiceTest {
     private final MongPersistencePort mongPersistencePort = Mockito.mock(MongPersistencePort.class);
     private final MongEventPort mongEventPort = Mockito.mock(MongEventPort.class);
     private final MongReadPort mongReadPort = Mockito.mock(MongReadPort.class);
-    private final InteractionUseCase interactionUseCase = new InteractionService(mongPersistencePort, mongReadPort, mongEventPort);
+    private final MissionUseCase missionUseCase = Mockito.mock(MissionUseCase.class);
+    private final InteractionUseCase interactionUseCase = new InteractionService(mongPersistencePort, mongReadPort, mongEventPort, missionUseCase);
 
     @Nested
     @DisplayName("음식 목록 조회 단위 테스트")

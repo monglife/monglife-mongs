@@ -5,6 +5,7 @@ dependencies {
     implementation project(":character-service:adapter-in:battle-web-adapter-in")
     implementation project(":character-service:adapter-in:mong-event-adapter-in")
     implementation project(":character-service:adapter-in:mong-web-adapter-in")
+    implementation project(":character-service:adapter-in:admin-web-adapter-in")
 
     // adapter-out layer
     implementation project(":character-service:adapter-out:battle-persistence-adapter-out")

@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,8 +91,21 @@ public class MongReadService implements
      */
     @Override
     public List<MongEvolutionHistory> getMongEvolutionHistoriesPort(Long accountId) {
-        return mongEvolutionHistoryRepository.findByAccountId(accountId).stream()
-                .map(MongEvolutionHistoryEntity::toDomain)
+
+        List<MongEvolutionHistoryEntity> histories = mongEvolutionHistoryRepository.findByAccountId(accountId);
+
+        if (histories.isEmpty()) {
+            return List.of();
+        }
+
+        // 이력 표는 코드만 들고 있다. 이름은 마스터에 있으므로 한 번에 읽어 붙인다 - 행마다 찾으면 N+1 이다.
+        Set<String> mongCodes = histories.stream().map(MongEvolutionHistoryEntity::getMongCode).collect(Collectors.toSet());
+        Map<String, String> nameByCode = mongTypeRepository.findByComnCodeIn(mongCodes).stream()
+                .collect(Collectors.toMap(entity -> entity.getComn().getCode(), entity -> entity.getComn().getName()));
+
+        return histories.stream()
+                // 마스터에서 지워진 코드면 이름이 null 이다. 이력 자체는 남긴다.
+                .map(entity -> entity.toDomain(nameByCode.get(entity.getMongCode())))
                 .collect(Collectors.toList());
     }
 

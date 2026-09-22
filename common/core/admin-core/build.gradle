@@ -1,0 +1,4 @@
+dependencies {
+    // 감사 로그
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+}
